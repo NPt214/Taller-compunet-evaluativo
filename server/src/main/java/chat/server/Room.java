@@ -3,11 +3,6 @@ package chat.server;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Sala / canal de chat (RF-03).
- * El conjunto de miembros es concurrente: varios hilos del servidor pueden
- * unir, retirar y difundir a la vez sin condiciones de carrera.
- */
 public final class Room {
 
     private final String name;
@@ -27,12 +22,10 @@ public final class Room {
         return owner;
     }
 
-    /** @return true si el usuario no era miembro y quedo agregado. */
     public boolean addMember(String nickname) {
         return members.add(nickname);
     }
 
-    /** @return true si el usuario era miembro y fue retirado. */
     public boolean removeMember(String nickname) {
         return members.remove(nickname);
     }
@@ -41,7 +34,6 @@ public final class Room {
         return members.contains(nickname);
     }
 
-    /** Copia ordenada de los miembros actuales. */
     public String[] membersSnapshot() {
         return members.stream().sorted().toArray(String[]::new);
     }

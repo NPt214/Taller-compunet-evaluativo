@@ -10,29 +10,23 @@ public class ServerMain {
     public static void main(String[] args) {
         int exitCode = 0;
 
-        // Propiedades por defecto (pueden sobreescribirse por linea de comandos)
         InitializationData initData = new InitializationData();
         initData.properties = Util.createProperties(args);
-        // Pool de hilos multihilo para atender clientes concurrentes
         setDefault(initData, "Ice.ThreadPool.Server.Size", "4");
         setDefault(initData, "Ice.ThreadPool.Server.SizeMax", "16");
 
-        // Inicializacion del Communicator dentro de try-with-resources
         try (Communicator communicator = Util.initialize(args, initData)) {
 
-            // 1. Crear ObjectAdapter vinculado al puerto TCP 10000
             ObjectAdapter adapter =
                     communicator.createObjectAdapterWithEndpoints(
                             "ChatAdapter",
                             "default -p 10000"
                     );
 
-            // 2. Instanciar el Servant y registrarlo con identidad "ChatService"
             ChatRoomI servant = new ChatRoomI();
 
             adapter.add(servant, Util.stringToIdentity("ChatService"));
 
-            // 3. Activar el adaptador para recibir llamadas RPC
             adapter.activate();
 
             System.out.println("=================================================");
@@ -42,7 +36,6 @@ public class ServerMain {
             System.out.println("=================================================");
             System.out.println("Esperando llamadas remotas de clientes...");
 
-            // 4. Bloquear el hilo principal hasta orden de apagado (Ctrl+C)
             communicator.waitForShutdown();
 
         } catch (Exception e) {
@@ -62,4 +55,4 @@ public class ServerMain {
             initData.properties.setProperty(key, value);
         }
     }
-}
+}

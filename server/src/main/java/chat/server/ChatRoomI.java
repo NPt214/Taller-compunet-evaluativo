@@ -36,39 +36,24 @@ import java.util.function.Function;
 
 public class ChatRoomI implements ChatRoom {
 
-    // Segundos sin trafico (ni heartbeats) tras los cuales se considera
-    // perdida la conexion de un cliente. El cliente envia heartbeats con
-    // este mismo valor, asi que solo se cierra si el cliente deja de responder.
     static final int SESSION_TIMEOUT_SECONDS = 10;
 
-    // Tiempo maximo de espera de una invocacion de callback hacia un cliente.
     private static final int CALLBACK_TIMEOUT_MS = 5000;
 
-    // ---- Estado global thread-safe ------------------------------------
-    // RF-01: sesiones activas indexadas por nickname (nickname -> sesion)
     private final Map<String, ClientSession> sessions = new ConcurrentHashMap<>();
 
-    // RF-02: nicknames que alguna vez iniciaron sesion; permite distinguir
-    // "destinatario inexistente" de "destinatario desconectado"
     private final Set<String> knownUsers = ConcurrentHashMap.newKeySet();
     private final AtomicLong privateIdCounter = new AtomicLong(0);
 
-    // RF-03: salas activas indexadas por nombre en minusculas (unicidad sin
-    // distinguir mayusculas). Cada Room guarda su propio set concurrente.
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
     private final AtomicLong roomMessageIdCounter = new AtomicLong(0);
     private static final java.util.regex.Pattern ROOM_NAME =
             java.util.regex.Pattern.compile("[A-Za-z0-9_-]{1,32}");
 
-    // Sala compartida original (historial consultado por polling)
     private final List<ChatMessage> messageHistory = new CopyOnWriteArrayList<>();
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final DateTimeFormatter timeFormat =
             DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    // =====================================================================
-    // RF-01: Sesion, presencia y registro de callbacks
-    // =====================================================================
 
     @Override
     public void login(String nickname, ClientCallbackPrx callback, Current current)
@@ -84,17 +69,14 @@ public class ChatRoomI implements ChatRoom {
 
         String cleanNick = nickname.trim();
 
-        // Chequeo rapido antes de contactar al cliente
         if (sessions.containsKey(cleanNick)) {
             throw new NicknameInUseException(
                     "El nickname '" + cleanNick + "' ya se encuentra conectado.",
                     cleanNick);
         }
 
-        // Limita el tiempo de espera de cualquier callback hacia este cliente
         ClientCallbackPrx cb = callback.ice_invocationTimeout(CALLBACK_TIMEOUT_MS);
 
-        // Verifica que el objeto de retorno sea alcanzable antes de aceptarlo
         try {
             cb.ice_ping();
         } catch (com.zeroc.Ice.LocalException e) {
@@ -106,8 +88,6 @@ public class ChatRoomI implements ChatRoom {
         Connection con = current.con;
         ClientSession session = new ClientSession(cleanNick, cb, con);
 
-        // putIfAbsent es atomico: dos logins simultaneos con el mismo
-        // nickname nunca pueden registrarse a la vez
         if (sessions.putIfAbsent(cleanNick, session) != null) {
             throw new NicknameInUseException(
                     "El nickname '" + cleanNick + "' ya se encuentra conectado.",
@@ -120,7 +100,6 @@ public class ChatRoomI implements ChatRoom {
         log("Usuario conectado: " + cleanNick + " (en linea: " + sessions.size() + ")");
         addSystemMessage(cleanNick + " se unio a la sala.");
 
-        // Monitor de presencia: avisa a todos los demas clientes
         broadcast(cleanNick, prx -> prx.onUserConnectedAsync(cleanNick));
     }
 
@@ -140,16 +119,9 @@ public class ChatRoomI implements ChatRoom {
         return sessions.keySet().stream().sorted().toArray(String[]::new);
     }
 
-    /**
-     * Configura la conexion del cliente para detectar caidas abruptas:
-     * - ACM: si no llega trafico ni heartbeats en SESSION_TIMEOUT_SECONDS,
-     *   el servidor cierra la conexion a la fuerza.
-     * - CloseCallback: al cerrarse la conexion (logout, proceso terminado,
-     *   red caida o timeout ACM) se eliminan las sesiones asociadas.
-     */
     private void watchConnection(Connection con) {
         if (con == null) {
-            return; // invocacion colocada (mismo proceso): no hay conexion
+            return;
         }
         try {
             con.setACM(OptionalInt.of(SESSION_TIMEOUT_SECONDS),
@@ -167,21 +139,16 @@ public class ChatRoomI implements ChatRoom {
         }
     }
 
-    /**
-     * Elimina la sesion (solo si sigue siendo la registrada, para evitar
-     * dobles notificaciones) y avisa al resto de usuarios.
-     */
     private void endSession(ClientSession session, String reason) {
         String nick = session.getNickname();
         if (!sessions.remove(nick, session)) {
-            return; // ya fue eliminada por otro hilo
+            return;
         }
         log("Usuario desconectado: " + nick + " [" + reason + "] (en linea: "
                 + sessions.size() + ")");
         addSystemMessage(nick + " ha abandonado la sala.");
         broadcast(nick, prx -> prx.onUserDisconnectedAsync(nick));
 
-        // RF-03: retirar al usuario de todas sus salas y avisar a los miembros
         for (Room room : rooms.values()) {
             if (room.removeMember(nick)) {
                 notifyRoomMembers(room, nick,
@@ -190,11 +157,6 @@ public class ChatRoomI implements ChatRoom {
         }
     }
 
-    /**
-     * Envia una notificacion asincrona a todos los clientes excepto
-     * {@code excludedNick}. Si un cliente no responde se considera caido
-     * y su sesion se elimina.
-     */
     private void broadcast(String excludedNick,
                            Function<ClientCallbackPrx, CompletableFuture<Void>> call) {
         for (ClientSession s : sessions.values()) {
@@ -204,10 +166,6 @@ public class ChatRoomI implements ChatRoom {
         }
     }
 
-    /**
-     * Invoca un callback de forma asincrona (AMI) sin bloquear el hilo de
-     * despacho del servidor. Ante un error de red, retira al cliente.
-     */
     private <T> CompletableFuture<T> notifyClient(
             ClientSession s, Function<ClientCallbackPrx, CompletableFuture<T>> call) {
         CompletableFuture<T> future;
@@ -224,10 +182,6 @@ public class ChatRoomI implements ChatRoom {
         });
         return future;
     }
-
-    // =====================================================================
-    // RF-02: Mensajeria privada directa (1 a 1)
-    // =====================================================================
 
     @Override
     public DeliveryReceipt sendPrivateMessage(
@@ -251,7 +205,6 @@ public class ChatRoomI implements ChatRoom {
             throw new ChatException("El mensaje no puede estar vacio.");
         }
 
-        // Localiza el proxy de callback del destinatario
         ClientSession target = sessions.get(to);
         if (target == null) {
             if (knownUsers.contains(to)) {
@@ -266,8 +219,6 @@ public class ChatRoomI implements ChatRoom {
         String now = now();
         PrivateMessage msg = new PrivateMessage(id, from.getNickname(), to, text.trim(), now);
 
-        // Despacho asincrono (AMI): el servidor no espera al destinatario.
-        // Si la entrega falla despues, se avisa al remitente por su callback.
         notifyClient(target, prx -> prx.onPrivateMessageAsync(msg))
                 .whenComplete((r, ex) -> {
                     if (ex != null) {
@@ -285,11 +236,6 @@ public class ChatRoomI implements ChatRoom {
         return new DeliveryReceipt(id, to, now);
     }
 
-    /**
-     * Verifica que el nickname tenga una sesion activa y que la invocacion
-     * llegue por la misma conexion con la que inicio sesion (evita que un
-     * cliente envie mensajes suplantando a otro).
-     */
     private ClientSession requireSession(String nickname, Current current) throws ChatException {
         ClientSession s = nickname == null ? null : sessions.get(nickname.trim());
         if (s == null) {
@@ -304,10 +250,6 @@ public class ChatRoomI implements ChatRoom {
         return s;
     }
 
-    // =====================================================================
-    // RF-03: Grupos / salas de chat (canales)
-    // =====================================================================
-
     @Override
     public void createRoom(String nickname, String roomName, Current current)
             throws ChatException {
@@ -316,16 +258,14 @@ public class ChatRoomI implements ChatRoom {
         String name = validateRoomName(roomName);
 
         Room room = new Room(name, s.getNickname());
-        // putIfAbsent: dos creaciones simultaneas del mismo nombre no chocan
         if (rooms.putIfAbsent(key(name), room) != null) {
             throw new RoomAlreadyExistsException(
                     "Ya existe una sala llamada '" + name + "'.", name);
         }
-        room.addMember(s.getNickname()); // el creador queda unido
+        room.addMember(s.getNickname());
 
         log("Sala creada: #" + name + " por " + s.getNickname());
 
-        // Aviso a todos los conectados para que conozcan el nuevo canal
         broadcast(s.getNickname(), prx -> prx.onRoomCreatedAsync(name, s.getNickname()));
     }
 
@@ -350,8 +290,6 @@ public class ChatRoomI implements ChatRoom {
         if (!room.addMember(nick)) {
             throw new ChatException("Ya eres miembro de la sala '" + room.getName() + "'.");
         }
-        // Si la sesion termino mientras se unia, se deshace para no dejar
-        // miembros "fantasma" en la sala
         if (sessions.get(nick) != s) {
             room.removeMember(nick);
             throw new ChatException("La sesion de '" + nick + "' ya no esta activa.");
@@ -401,7 +339,6 @@ public class ChatRoomI implements ChatRoom {
         Room room = requireRoom(roomName);
         String nick = s.getNickname();
 
-        // Aislamiento: solo los miembros pueden publicar en la sala
         if (!room.isMember(nick)) {
             throw new NotRoomMemberException(
                     "No eres miembro de la sala '" + room.getName() + "'.", room.getName());
@@ -413,7 +350,6 @@ public class ChatRoomI implements ChatRoom {
         long id = roomMessageIdCounter.incrementAndGet();
         RoomMessage msg = new RoomMessage(id, room.getName(), nick, text.trim(), now());
 
-        // Difusion: solo a los miembros de ESTA sala y nunca al emisor
         int recipients = notifyRoomMembers(room, nick, prx -> prx.onRoomMessageAsync(msg));
 
         log("#" + room.getName() + " <" + nick + "> mensaje #" + id
@@ -421,11 +357,6 @@ public class ChatRoomI implements ChatRoom {
         return id;
     }
 
-    /**
-     * Envia un callback asincrono a cada miembro de la sala con sesion activa,
-     * excepto a {@code excludedNick}.
-     * @return numero de miembros notificados
-     */
     private int notifyRoomMembers(Room room, String excludedNick,
                                   Function<ClientCallbackPrx, CompletableFuture<Void>> call) {
         int count = 0;
@@ -473,10 +404,6 @@ public class ChatRoomI implements ChatRoom {
         return roomName.toLowerCase(java.util.Locale.ROOT);
     }
 
-    // =====================================================================
-    // Sala compartida original (polling)
-    // =====================================================================
-
     @Override
     public void postMessage(
             String nickname,
@@ -520,10 +447,6 @@ public class ChatRoomI implements ChatRoom {
 
         return pending.toArray(new ChatMessage[0]);
     }
-
-    // =====================================================================
-    // Utilidades
-    // =====================================================================
 
     private void addSystemMessage(String text) {
         messageHistory.add(new ChatMessage(

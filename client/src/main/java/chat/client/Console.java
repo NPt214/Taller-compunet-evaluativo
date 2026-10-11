@@ -1,11 +1,5 @@
 package chat.client;
 
-/**
- * Salida de consola compartida entre el hilo que lee comandos del usuario y
- * los hilos de Ice que entregan callbacks. Todas las escrituras estan
- * sincronizadas para que los mensajes asincronos no se mezclen entre si y
- * el prompt se vuelva a dibujar despues de cada evento.
- */
 public final class Console {
 
     private static volatile String prompt = "> ";
@@ -14,7 +8,6 @@ public final class Console {
     private Console() {
     }
 
-    /** Imprime un evento asincrono sin romper la linea del prompt. */
     public static synchronized void event(String text) {
         if (promptVisible) {
             System.out.print("\r");
@@ -26,7 +19,6 @@ public final class Console {
         System.out.flush();
     }
 
-    /** Imprime una linea normal (respuesta directa a un comando). */
     public static synchronized void println(String text) {
         System.out.println(text);
         System.out.flush();
@@ -38,7 +30,6 @@ public final class Console {
         promptVisible = true;
     }
 
-    /** Cambia el prompt (p. ej. para mostrar la sala activa). */
     public static synchronized void setPrompt(String newPrompt) {
         prompt = newPrompt;
     }

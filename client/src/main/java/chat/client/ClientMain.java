@@ -24,18 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
-/**
- * Cliente CLI del chat.
- *
- * Uso: ClientMain [host] [puerto]   (por defecto localhost 10000)
- *
- * El hilo principal solo lee comandos del teclado; los eventos que envia el
- * servidor (presencia, mensajes) llegan por callbacks en hilos de Ice y se
- * imprimen con {@link Console}, de modo que la entrada nunca se bloquea.
- */
 public class ClientMain {
 
-    // Debe coincidir con ChatRoomI.SESSION_TIMEOUT_SECONDS del servidor
     private static final int SESSION_TIMEOUT_SECONDS = 10;
 
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -45,10 +35,8 @@ public class ClientMain {
     private final ClientCallbackI callback;
     private final ClientCallbackPrx callbackPrx;
 
-    // Nickname de la sesion activa (null si no hay sesion)
     private volatile String nickname;
 
-    // RF-03: sala a la que va el texto escrito sin comando (null si ninguna)
     private volatile String activeRoom;
 
     public static void main(String[] args) {
@@ -74,36 +62,25 @@ public class ClientMain {
     public ClientMain(Communicator communicator, String host, String port) {
         this.communicator = communicator;
 
-        // 1. Proxy directo al servicio del servidor
         this.server = ChatRoomPrx.checkedCast(
                 communicator.stringToProxy("ChatService:default -h " + host + " -p " + port));
         if (server == null) {
             throw new IllegalStateException("El proxy ChatService no es valido.");
         }
 
-        // 2. ObjectAdapter propio del cliente para recibir callbacks.
-        //    "default" escucha en un puerto libre de todas las interfaces;
-        //    se puede cambiar con --CallbackAdapter.Endpoints="tcp -h IP"
         String endpoints = communicator.getProperties()
                 .getPropertyWithDefault("CallbackAdapter.Endpoints", "default");
         ObjectAdapter adapter =
                 communicator.createObjectAdapterWithEndpoints("CallbackAdapter", endpoints);
 
-        // 3. Registrar el servant del callback y obtener su proxy
         this.callback = new ClientCallbackI();
         Identity id = new Identity(UUID.randomUUID().toString(), "client");
         this.callbackPrx = ClientCallbackPrx.uncheckedCast(adapter.add(callback, id));
 
-        // 4. Activar el adaptador para que el servidor pueda invocarnos
         adapter.activate();
 
-        // Cierre ordenado si el proceso termina con Ctrl+C
         Runtime.getRuntime().addShutdownHook(new Thread(this::logoutQuietly));
     }
-
-    // ---------------------------------------------------------------------
-    // Bucle principal de lectura de comandos
-    // ---------------------------------------------------------------------
 
     private void run() throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -111,7 +88,6 @@ public class ClientMain {
         Console.println(" CHAT ZEROC ICE - cliente CLI");
         Console.println("=================================================");
 
-        // Pedir nickname hasta lograr iniciar sesion
         while (nickname == null) {
             Console.println("Ingrese su nickname (o /quit para salir):");
             Console.prompt();
@@ -129,7 +105,7 @@ public class ClientMain {
             String line = in.readLine();
             Console.hidePrompt();
             if (line == null) {
-                break; // fin de entrada (Ctrl+D / Ctrl+Z)
+                break;
             }
             line = line.trim();
             if (line.isEmpty()) {
@@ -143,9 +119,7 @@ public class ClientMain {
         Console.println("Hasta luego.");
     }
 
-    /** @return false si el usuario pidio salir. */
     private boolean handleCommand(String line) {
-        // RF-03: texto sin '/' se envia a la sala activa
         if (!line.startsWith("/")) {
             if (activeRoom == null) {
                 Console.println("No hay sala activa. Usa /join <sala>, /use <sala> "
@@ -159,7 +133,6 @@ public class ClientMain {
         String[] parts = line.split("\\s+", 3);
         String cmd = parts[0].toLowerCase();
 
-        // Los nombres de sala no admiten espacios: se rechaza en vez de truncar
         if (parts.length == 3 && (cmd.equals("/create") || cmd.equals("/join")
                 || cmd.equals("/leave") || cmd.equals("/use") || cmd.equals("/members"))) {
             Console.println("[ERROR] El nombre de la sala no puede contener espacios.");
@@ -257,10 +230,6 @@ public class ClientMain {
         Console.println("  /help                  Muestra esta ayuda");
     }
 
-    // ---------------------------------------------------------------------
-    // RF-01: sesion y presencia
-    // ---------------------------------------------------------------------
-
     private void login(String nick) {
         if (nick.isEmpty() || nick.startsWith("/") || nick.contains(" ")) {
             Console.println("[ERROR] Nickname invalido (no puede estar vacio, "
@@ -307,7 +276,6 @@ public class ClientMain {
             try {
                 server.logout(nick);
             } catch (Exception ignored) {
-                // el communicator puede estar cerrandose
             }
         }
     }
@@ -329,15 +297,6 @@ public class ClientMain {
         }
     }
 
-    // ---------------------------------------------------------------------
-    // RF-02: mensajeria privada 1 a 1
-    // ---------------------------------------------------------------------
-
-    /**
-     * Envia el mensaje con una invocacion asincrona (AMI): el hilo de la
-     * consola no se bloquea esperando al servidor. La confirmacion o el
-     * error se imprimen cuando llega la respuesta.
-     */
     private void sendPrivate(String to, String text) {
         String me = nickname;
         if (me == null) {
@@ -352,8 +311,6 @@ public class ClientMain {
             }
             Throwable cause = ex instanceof CompletionException && ex.getCause() != null
                     ? ex.getCause() : ex;
-            // UserNotFoundException y UserOfflineException heredan de
-            // ChatException y traen un motivo descriptivo en 'reason'
             if (cause instanceof ChatException) {
                 Console.event("[ERROR] " + ((ChatException) cause).reason);
             } else {
@@ -361,10 +318,6 @@ public class ClientMain {
             }
         });
     }
-
-    // ---------------------------------------------------------------------
-    // RF-03: salas / canales
-    // ---------------------------------------------------------------------
 
     private void createRoom(String room) {
         if (!requireLogin()) {
@@ -468,14 +421,13 @@ public class ClientMain {
         }
     }
 
-    /** Cambia la sala activa verificando que el usuario sea miembro. */
     private void useRoom(String room) {
         if (!requireLogin()) {
             return;
         }
         String name = stripHash(room);
         try {
-            server.getRoomMembers(nickname, name); // valida existencia y membresia
+            server.getRoomMembers(nickname, name);
             name = canonicalRoomName(name);
             setActiveRoom(name);
             Console.println("[OK] Sala activa: #" + name);
@@ -486,11 +438,6 @@ public class ClientMain {
         }
     }
 
-    /**
-     * Difunde un mensaje en la sala con una invocacion asincrona (AMI).
-     * El servidor no lo reenvia al emisor, asi que el eco local se imprime
-     * al recibir la confirmacion.
-     */
     private void sendRoom(String room, String text) {
         if (!requireLogin()) {
             return;
@@ -513,7 +460,6 @@ public class ClientMain {
         });
     }
 
-    /** Nombre real de la sala (el servidor no distingue mayusculas). */
     private String canonicalRoomName(String name) {
         try {
             for (RoomInfo r : server.listRooms(nickname)) {
@@ -522,7 +468,6 @@ public class ClientMain {
                 }
             }
         } catch (ChatException | com.zeroc.Ice.LocalException ignored) {
-            // si falla se conserva el nombre escrito por el usuario
         }
         return name;
     }
@@ -544,12 +489,6 @@ public class ClientMain {
         return room.startsWith("#") ? room.substring(1) : room;
     }
 
-    /**
-     * Configura la conexion con el servidor para enviar heartbeats
-     * continuamente y no cerrarla por inactividad. Asi el servidor puede
-     * distinguir un cliente inactivo (sigue enviando heartbeats) de uno
-     * caido (deja de enviarlos).
-     */
     private void keepConnectionAlive() {
         try {
             server.ice_getConnection().setACM(
