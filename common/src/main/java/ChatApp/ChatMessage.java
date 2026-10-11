@@ -26,19 +26,23 @@ public class ChatMessage implements java.lang.Cloneable,
 
     public String timestamp;
 
+    public String room;
+
     public ChatMessage()
     {
         this.sender = "";
         this.text = "";
         this.timestamp = "";
+        this.room = "";
     }
 
-    public ChatMessage(long id, String sender, String text, String timestamp)
+    public ChatMessage(long id, String sender, String text, String timestamp, String room)
     {
         this.id = id;
         this.sender = sender;
         this.text = text;
         this.timestamp = timestamp;
+        this.room = room;
     }
 
     public boolean equals(java.lang.Object rhs)
@@ -80,6 +84,13 @@ public class ChatMessage implements java.lang.Cloneable,
                     return false;
                 }
             }
+            if(this.room != r.room)
+            {
+                if(this.room == null || r.room == null || !this.room.equals(r.room))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
@@ -95,6 +106,7 @@ public class ChatMessage implements java.lang.Cloneable,
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, sender);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, text);
         h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, timestamp);
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, room);
         return h_;
     }
 
@@ -118,6 +130,7 @@ public class ChatMessage implements java.lang.Cloneable,
         ostr.writeString(this.sender);
         ostr.writeString(this.text);
         ostr.writeString(this.timestamp);
+        ostr.writeString(this.room);
     }
 
     public void ice_readMembers(com.zeroc.Ice.InputStream istr)
@@ -126,6 +139,7 @@ public class ChatMessage implements java.lang.Cloneable,
         this.sender = istr.readString();
         this.text = istr.readString();
         this.timestamp = istr.readString();
+        this.room = istr.readString();
     }
 
     static public void ice_write(com.zeroc.Ice.OutputStream ostr, ChatMessage v)
@@ -181,5 +195,5 @@ public class ChatMessage implements java.lang.Cloneable,
     private static final ChatMessage _nullMarshalValue = new ChatMessage();
 
     /** @hidden */
-    public static final long serialVersionUID = -1787918412L;
+    public static final long serialVersionUID = -1822717236L;
 }

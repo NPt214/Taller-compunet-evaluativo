@@ -16,62 +16,113 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ChatRoomI implements ChatRoom {
 
-    // Estructuras thread-safe para soporte concurrente
     private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
     private final List<ChatMessage> messageHistory = new CopyOnWriteArrayList<>();
+    private final ConcurrentHashMap<String, Set<String>> rooms = new ConcurrentHashMap<>();
     private final AtomicLong messageIdCounter = new AtomicLong(0);
-    private final DateTimeFormatter timeFormat =
-            DateTimeFormatter.ofPattern("HH:mm:ss");
+    private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Override
-    public synchronized void login(String nickname, Current current)
-            throws ChatException {
+    public synchronized void login(String nickname, Current current) throws ChatException {
 
         if (nickname == null || nickname.trim().isEmpty()) {
-            throw new ChatException(
-                    "El nickname no puede ser nulo o vacio."
-            );
+            throw new ChatException("El nickname no puede ser nulo o vacio.");
         }
 
         String cleanNick = nickname.trim();
 
         if (onlineUsers.contains(cleanNick)) {
-            throw new ChatException(
-                    "El nickname '" + cleanNick + "' ya se encuentra conectado."
-            );
+            throw new ChatException("El nickname '" + cleanNick + "' ya se encuentra conectado.");
         }
 
         onlineUsers.add(cleanNick);
 
-        System.out.println(
-                "[ICE-SERVER] Usuario conectado con exito: " + cleanNick
-        );
-
-        // Notificacion interna del sistema
-        String now = LocalTime.now().format(timeFormat);
-        long id = messageIdCounter.incrementAndGet();
-
-        ChatMessage joinMsg = new ChatMessage(
-                id,
-                "SISTEMA",
-                cleanNick + " se unio a la sala.",
-                now
-        );
-
-        messageHistory.add(joinMsg);
+        System.out.println("[ICE-SERVER] Usuario conectado con exito: " + cleanNick);
     }
 
     @Override
-    public void postMessage(
-            String nickname,
-            String message,
-            Current current
-    ) throws ChatException {
+    public void createRoom(String nickname, String room, Current current) throws ChatException {
 
         if (!onlineUsers.contains(nickname)) {
-            throw new ChatException(
-                    "Acceso denegado: El usuario debe iniciar sesion primero."
-            );
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+
+        if (room == null || room.trim().isEmpty()) {
+            throw new ChatException("El nombre de la sala no puede estar vacio.");
+        }
+
+        String cleanRoom = room.trim();
+        Set<String> newRoom = ConcurrentHashMap.newKeySet();
+        Set<String> previous = rooms.putIfAbsent(cleanRoom, newRoom);
+
+        if (previous != null) {
+            throw new ChatException("La sala '" + cleanRoom + "' ya existe.");
+        }
+
+        System.out.println("[ICE-SERVER] Sala creada: " + cleanRoom);
+    }
+
+    @Override
+    public String[] listRooms(Current current) {
+
+        return rooms.keySet().toArray(new String[0]);
+    }
+
+    @Override
+    public void joinRoom(String nickname, String room, Current current) throws ChatException {
+
+        if (!onlineUsers.contains(nickname)) {
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+
+        Set<String> members = rooms.get(room);
+
+        if (members == null) {
+            throw new ChatException("La sala '" + room + "' no existe.");
+        }
+
+        if (!members.add(nickname)) {
+            throw new ChatException("El usuario ya pertenece a la sala '" + room + "'.");
+        }
+
+        System.out.println("[ICE-SERVER] " + nickname + " se unio a la sala " + room);
+    }
+
+    @Override
+    public void leaveRoom(String nickname, String room, Current current) throws ChatException {
+
+        if (!onlineUsers.contains(nickname)) {
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+
+        Set<String> members = rooms.get(room);
+
+        if (members == null) {
+            throw new ChatException("La sala '" + room + "' no existe.");
+        }
+
+        if (!members.remove(nickname)) {
+            throw new ChatException("El usuario no pertenece a la sala '" + room + "'.");
+        }
+
+        System.out.println("[ICE-SERVER] " + nickname + " abandono la sala " + room);
+    }
+
+    @Override
+    public void postMessage(String nickname, String room, String message, Current current) throws ChatException {
+
+        if (!onlineUsers.contains(nickname)) {
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+
+        Set<String> members = rooms.get(room);
+
+        if (members == null) {
+            throw new ChatException("La sala '" + room + "' no existe.");
+        }
+
+        if (!members.contains(nickname)) {
+            throw new ChatException("El usuario no pertenece a la sala '" + room + "'.");
         }
 
         if (message == null || message.trim().isEmpty()) {
@@ -80,32 +131,31 @@ public class ChatRoomI implements ChatRoom {
 
         long id = messageIdCounter.incrementAndGet();
         String now = LocalTime.now().format(timeFormat);
-
-        ChatMessage msg = new ChatMessage(
-                id,
-                nickname,
-                message.trim(),
-                now
-        );
+        ChatMessage msg = new ChatMessage(id, nickname, message.trim(), now, room);
 
         messageHistory.add(msg);
 
-        System.out.println(
-                "[" + now + "] <" + nickname + "> " + message.trim()
-        );
+        System.out.println("[" + now + "] [" + room + "] <" + nickname + "> " + message.trim());
     }
 
     @Override
-    public ChatMessage[] getPendingMessages(
-            String nickname,
-            long lastMessageId,
-            Current current
-    ) {
+    public ChatMessage[] getPendingMessages(String nickname, long lastMessageId, Current current) {
 
         List<ChatMessage> pending = new ArrayList<>();
 
         for (ChatMessage msg : messageHistory) {
-            if (msg.id > lastMessageId) {
+
+            if (msg.id <= lastMessageId) {
+                continue;
+            }
+
+            if (msg.sender.equals(nickname)) {
+                continue;
+            }
+
+            Set<String> members = rooms.get(msg.room);
+
+            if (members != null && members.contains(nickname)) {
                 pending.add(msg);
             }
         }
@@ -115,32 +165,20 @@ public class ChatRoomI implements ChatRoom {
 
     @Override
     public String[] getOnlineUsers(Current current) {
+
         return onlineUsers.toArray(new String[0]);
     }
 
     @Override
-    public synchronized void logout(
-            String nickname,
-            Current current
-    ) {
+    public synchronized void logout(String nickname, Current current) {
 
         if (onlineUsers.remove(nickname)) {
 
-            System.out.println(
-                    "[ICE-SERVER] Usuario desconectado: " + nickname
-            );
+            for (Set<String> members : rooms.values()) {
+                members.remove(nickname);
+            }
 
-            String now = LocalTime.now().format(timeFormat);
-            long id = messageIdCounter.incrementAndGet();
-
-            ChatMessage leaveMsg = new ChatMessage(
-                    id,
-                    "SISTEMA",
-                    nickname + " ha abandonado la sala.",
-                    now
-            );
-
-            messageHistory.add(leaveMsg);
+            System.out.println("[ICE-SERVER] Usuario desconectado: " + nickname);
         }
     }
 }

@@ -39,7 +39,7 @@ public final class MessageSeqHelper
     public static ChatMessage[] read(com.zeroc.Ice.InputStream istr)
     {
         final ChatMessage[] v;
-        final int len0 = istr.readAndCheckSeqSize(11);
+        final int len0 = istr.readAndCheckSeqSize(12);
         v = new ChatMessage[len0];
         for(int i0 = 0; i0 < len0; i0++)
         {

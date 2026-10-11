@@ -6,11 +6,13 @@ module ChatApp {
         string sender;
         string text;
         string timestamp;
+        string room;
     };
 
     // Secuencias tipadas (equivalentes a arreglos/listas en Java)
     sequence<ChatMessage> MessageSeq;
     sequence<string> UserSeq;
+    sequence<string> RoomSeq;
 
     // Excepción de usuario para validaciones de negocio
     exception ChatException {
@@ -23,8 +25,39 @@ module ChatApp {
         // Registra un usuario; falla si el nickname ya existe
         void login(string nickname) throws ChatException;
 
-        // Envía un mensaje a la sala compartida
-        void postMessage(string nickname, string message) throws ChatException;
+
+        // Crea una nueva sala de chat
+        void createRoom(
+            string nickname,
+            string room
+        ) throws ChatException;
+
+
+        // Retorna la lista de salas disponibles
+        idempotent RoomSeq listRooms();
+
+
+        // Permite que un usuario se una a una sala
+        void joinRoom(
+            string nickname,
+            string room
+        ) throws ChatException;
+
+
+        // Permite que un usuario abandone una sala
+        void leaveRoom(
+            string nickname,
+            string room
+        ) throws ChatException;
+
+
+        // Envía un mensaje a la especifica compartida
+        void postMessage(
+            string nickname,
+            string room,
+            string message
+        ) throws ChatException;
+
 
         // Consulta de mensajes pendientes
         // idempotent permite reintentos seguros de red
