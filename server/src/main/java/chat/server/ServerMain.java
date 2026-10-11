@@ -1,6 +1,7 @@
 package chat.server;
 
 import com.zeroc.Ice.Communicator;
+import com.zeroc.Ice.InitializationData;
 import com.zeroc.Ice.ObjectAdapter;
 import com.zeroc.Ice.Util;
 
@@ -9,8 +10,15 @@ public class ServerMain {
     public static void main(String[] args) {
         int exitCode = 0;
 
+        // Propiedades por defecto (pueden sobreescribirse por linea de comandos)
+        InitializationData initData = new InitializationData();
+        initData.properties = Util.createProperties(args);
+        // Pool de hilos multihilo para atender clientes concurrentes
+        setDefault(initData, "Ice.ThreadPool.Server.Size", "4");
+        setDefault(initData, "Ice.ThreadPool.Server.SizeMax", "16");
+
         // Inicializacion del Communicator dentro de try-with-resources
-        try (Communicator communicator = Util.initialize(args)) {
+        try (Communicator communicator = Util.initialize(args, initData)) {
 
             // 1. Crear ObjectAdapter vinculado al puerto TCP 10000
             ObjectAdapter adapter =
@@ -48,4 +56,10 @@ public class ServerMain {
 
         System.exit(exitCode);
     }
-}
+
+    private static void setDefault(InitializationData initData, String key, String value) {
+        if (initData.properties.getProperty(key).isEmpty()) {
+            initData.properties.setProperty(key, value);
+        }
+    }
+}

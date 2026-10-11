@@ -1,0 +1,14 @@
+plugins {
+    id 'application'
+}
+dependencies {
+// Vincula las clases generadas por Slice desde el modulo common
+    implementation project (':common')
+}
+application {
+    mainClass = 'chat.client.ClientMain'
+}
+// Permite leer comandos desde la consola al ejecutar con gradle run
+run {
+    standardInput = System.in
+}
