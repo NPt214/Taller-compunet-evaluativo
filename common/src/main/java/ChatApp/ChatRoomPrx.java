@@ -309,6 +309,364 @@ public interface ChatRoomPrx extends com.zeroc.Ice.ObjectPrx
         ChatException.class
     };
 
+    default void createRoom(String nickname, String room)
+        throws ChatException
+    {
+        createRoom(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void createRoom(String nickname, String room, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            _iceI_createRoomAsync(nickname, room, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> createRoomAsync(String nickname, String room)
+    {
+        return _iceI_createRoomAsync(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> createRoomAsync(String nickname, String room, java.util.Map<String, String> context)
+    {
+        return _iceI_createRoomAsync(nickname, room, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_nickname -
+     * @param iceP_room -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_createRoomAsync(String iceP_nickname, String iceP_room, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "createRoom", null, sync, _iceE_createRoom);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_nickname);
+                     ostr.writeString(iceP_room);
+                 }, null);
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_createRoom =
+    {
+        ChatException.class
+    };
+
+    default RoomInfo[] listRooms(String nickname)
+        throws ChatException
+    {
+        return listRooms(nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default RoomInfo[] listRooms(String nickname, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            return _iceI_listRoomsAsync(nickname, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<RoomInfo[]> listRoomsAsync(String nickname)
+    {
+        return _iceI_listRoomsAsync(nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<RoomInfo[]> listRoomsAsync(String nickname, java.util.Map<String, String> context)
+    {
+        return _iceI_listRoomsAsync(nickname, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_nickname -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<RoomInfo[]> _iceI_listRoomsAsync(String iceP_nickname, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<RoomInfo[]> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "listRooms", com.zeroc.Ice.OperationMode.Idempotent, sync, _iceE_listRooms);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_nickname);
+                 }, istr -> {
+                     RoomInfo[] ret;
+                     ret = RoomSeqHelper.read(istr);
+                     return ret;
+                 });
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_listRooms =
+    {
+        ChatException.class
+    };
+
+    default String[] joinRoom(String nickname, String room)
+        throws ChatException
+    {
+        return joinRoom(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default String[] joinRoom(String nickname, String room, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            return _iceI_joinRoomAsync(nickname, room, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> joinRoomAsync(String nickname, String room)
+    {
+        return _iceI_joinRoomAsync(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> joinRoomAsync(String nickname, String room, java.util.Map<String, String> context)
+    {
+        return _iceI_joinRoomAsync(nickname, room, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_nickname -
+     * @param iceP_room -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<String[]> _iceI_joinRoomAsync(String iceP_nickname, String iceP_room, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<String[]> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "joinRoom", null, sync, _iceE_joinRoom);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_nickname);
+                     ostr.writeString(iceP_room);
+                 }, istr -> {
+                     String[] ret;
+                     ret = istr.readStringSeq();
+                     return ret;
+                 });
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_joinRoom =
+    {
+        ChatException.class
+    };
+
+    default void leaveRoom(String nickname, String room)
+        throws ChatException
+    {
+        leaveRoom(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void leaveRoom(String nickname, String room, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            _iceI_leaveRoomAsync(nickname, room, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> leaveRoomAsync(String nickname, String room)
+    {
+        return _iceI_leaveRoomAsync(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> leaveRoomAsync(String nickname, String room, java.util.Map<String, String> context)
+    {
+        return _iceI_leaveRoomAsync(nickname, room, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_nickname -
+     * @param iceP_room -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_leaveRoomAsync(String iceP_nickname, String iceP_room, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "leaveRoom", null, sync, _iceE_leaveRoom);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_nickname);
+                     ostr.writeString(iceP_room);
+                 }, null);
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_leaveRoom =
+    {
+        ChatException.class
+    };
+
+    default String[] getRoomMembers(String nickname, String room)
+        throws ChatException
+    {
+        return getRoomMembers(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default String[] getRoomMembers(String nickname, String room, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            return _iceI_getRoomMembersAsync(nickname, room, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getRoomMembersAsync(String nickname, String room)
+    {
+        return _iceI_getRoomMembersAsync(nickname, room, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<String[]> getRoomMembersAsync(String nickname, String room, java.util.Map<String, String> context)
+    {
+        return _iceI_getRoomMembersAsync(nickname, room, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_nickname -
+     * @param iceP_room -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<String[]> _iceI_getRoomMembersAsync(String iceP_nickname, String iceP_room, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<String[]> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "getRoomMembers", com.zeroc.Ice.OperationMode.Idempotent, sync, _iceE_getRoomMembers);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_nickname);
+                     ostr.writeString(iceP_room);
+                 }, istr -> {
+                     String[] ret;
+                     ret = istr.readStringSeq();
+                     return ret;
+                 });
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_getRoomMembers =
+    {
+        ChatException.class
+    };
+
+    default long sendRoomMessage(String sender, String room, String text)
+        throws ChatException
+    {
+        return sendRoomMessage(sender, room, text, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default long sendRoomMessage(String sender, String room, String text, java.util.Map<String, String> context)
+        throws ChatException
+    {
+        try
+        {
+            return _iceI_sendRoomMessageAsync(sender, room, text, context, true).waitForResponseOrUserEx();
+        }
+        catch(ChatException ex)
+        {
+            throw ex;
+        }
+        catch(com.zeroc.Ice.UserException ex)
+        {
+            throw new com.zeroc.Ice.UnknownUserException(ex.ice_id(), ex);
+        }
+    }
+
+    default java.util.concurrent.CompletableFuture<java.lang.Long> sendRoomMessageAsync(String sender, String room, String text)
+    {
+        return _iceI_sendRoomMessageAsync(sender, room, text, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<java.lang.Long> sendRoomMessageAsync(String sender, String room, String text, java.util.Map<String, String> context)
+    {
+        return _iceI_sendRoomMessageAsync(sender, room, text, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_sender -
+     * @param iceP_room -
+     * @param iceP_text -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<java.lang.Long> _iceI_sendRoomMessageAsync(String iceP_sender, String iceP_room, String iceP_text, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<java.lang.Long> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "sendRoomMessage", null, sync, _iceE_sendRoomMessage);
+        f.invoke(true, context, null, ostr -> {
+                     ostr.writeString(iceP_sender);
+                     ostr.writeString(iceP_room);
+                     ostr.writeString(iceP_text);
+                 }, istr -> {
+                     long ret;
+                     ret = istr.readLong();
+                     return ret;
+                 });
+        return f;
+    }
+
+    /** @hidden */
+    static final Class<?>[] _iceE_sendRoomMessage =
+    {
+        ChatException.class
+    };
+
     /**
      * Contacts the remote server to verify that the object implements this type.
      * Raises a local exception if a communication error occurs.

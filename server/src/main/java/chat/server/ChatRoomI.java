@@ -6,7 +6,12 @@ import ChatApp.ChatRoom;
 import ChatApp.ClientCallbackPrx;
 import ChatApp.DeliveryReceipt;
 import ChatApp.NicknameInUseException;
+import ChatApp.NotRoomMemberException;
 import ChatApp.PrivateMessage;
+import ChatApp.RoomAlreadyExistsException;
+import ChatApp.RoomInfo;
+import ChatApp.RoomMessage;
+import ChatApp.RoomNotFoundException;
 import ChatApp.UserNotFoundException;
 import ChatApp.UserOfflineException;
 import com.zeroc.Ice.ACMClose;
@@ -47,6 +52,13 @@ public class ChatRoomI implements ChatRoom {
     // "destinatario inexistente" de "destinatario desconectado"
     private final Set<String> knownUsers = ConcurrentHashMap.newKeySet();
     private final AtomicLong privateIdCounter = new AtomicLong(0);
+
+    // RF-03: salas activas indexadas por nombre en minusculas (unicidad sin
+    // distinguir mayusculas). Cada Room guarda su propio set concurrente.
+    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+    private final AtomicLong roomMessageIdCounter = new AtomicLong(0);
+    private static final java.util.regex.Pattern ROOM_NAME =
+            java.util.regex.Pattern.compile("[A-Za-z0-9_-]{1,32}");
 
     // Sala compartida original (historial consultado por polling)
     private final List<ChatMessage> messageHistory = new CopyOnWriteArrayList<>();
@@ -168,6 +180,14 @@ public class ChatRoomI implements ChatRoom {
                 + sessions.size() + ")");
         addSystemMessage(nick + " ha abandonado la sala.");
         broadcast(nick, prx -> prx.onUserDisconnectedAsync(nick));
+
+        // RF-03: retirar al usuario de todas sus salas y avisar a los miembros
+        for (Room room : rooms.values()) {
+            if (room.removeMember(nick)) {
+                notifyRoomMembers(room, nick,
+                        prx -> prx.onRoomMemberLeftAsync(room.getName(), nick));
+            }
+        }
     }
 
     /**
@@ -282,6 +302,175 @@ public class ChatRoomI implements ChatRoom {
                             + "' pertenece a otro cliente.");
         }
         return s;
+    }
+
+    // =====================================================================
+    // RF-03: Grupos / salas de chat (canales)
+    // =====================================================================
+
+    @Override
+    public void createRoom(String nickname, String roomName, Current current)
+            throws ChatException {
+
+        ClientSession s = requireSession(nickname, current);
+        String name = validateRoomName(roomName);
+
+        Room room = new Room(name, s.getNickname());
+        // putIfAbsent: dos creaciones simultaneas del mismo nombre no chocan
+        if (rooms.putIfAbsent(key(name), room) != null) {
+            throw new RoomAlreadyExistsException(
+                    "Ya existe una sala llamada '" + name + "'.", name);
+        }
+        room.addMember(s.getNickname()); // el creador queda unido
+
+        log("Sala creada: #" + name + " por " + s.getNickname());
+
+        // Aviso a todos los conectados para que conozcan el nuevo canal
+        broadcast(s.getNickname(), prx -> prx.onRoomCreatedAsync(name, s.getNickname()));
+    }
+
+    @Override
+    public RoomInfo[] listRooms(String nickname, Current current) throws ChatException {
+        ClientSession s = requireSession(nickname, current);
+        return rooms.values().stream()
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                .map(r -> new RoomInfo(r.getName(), r.getOwner(), r.size(),
+                        r.isMember(s.getNickname())))
+                .toArray(RoomInfo[]::new);
+    }
+
+    @Override
+    public String[] joinRoom(String nickname, String roomName, Current current)
+            throws ChatException {
+
+        ClientSession s = requireSession(nickname, current);
+        Room room = requireRoom(roomName);
+        String nick = s.getNickname();
+
+        if (!room.addMember(nick)) {
+            throw new ChatException("Ya eres miembro de la sala '" + room.getName() + "'.");
+        }
+        // Si la sesion termino mientras se unia, se deshace para no dejar
+        // miembros "fantasma" en la sala
+        if (sessions.get(nick) != s) {
+            room.removeMember(nick);
+            throw new ChatException("La sesion de '" + nick + "' ya no esta activa.");
+        }
+
+        log(nick + " se unio a #" + room.getName() + " (miembros: " + room.size() + ")");
+        notifyRoomMembers(room, nick, prx -> prx.onRoomMemberJoinedAsync(room.getName(), nick));
+        return room.membersSnapshot();
+    }
+
+    @Override
+    public void leaveRoom(String nickname, String roomName, Current current)
+            throws ChatException {
+
+        ClientSession s = requireSession(nickname, current);
+        Room room = requireRoom(roomName);
+        String nick = s.getNickname();
+
+        if (!room.removeMember(nick)) {
+            throw new NotRoomMemberException(
+                    "No eres miembro de la sala '" + room.getName() + "'.", room.getName());
+        }
+
+        log(nick + " salio de #" + room.getName() + " (miembros: " + room.size() + ")");
+        notifyRoomMembers(room, nick, prx -> prx.onRoomMemberLeftAsync(room.getName(), nick));
+    }
+
+    @Override
+    public String[] getRoomMembers(String nickname, String roomName, Current current)
+            throws ChatException {
+
+        ClientSession s = requireSession(nickname, current);
+        Room room = requireRoom(roomName);
+        if (!room.isMember(s.getNickname())) {
+            throw new NotRoomMemberException(
+                    "Debes unirte a la sala '" + room.getName() + "' para ver sus miembros.",
+                    room.getName());
+        }
+        return room.membersSnapshot();
+    }
+
+    @Override
+    public long sendRoomMessage(String sender, String roomName, String text, Current current)
+            throws ChatException {
+
+        ClientSession s = requireSession(sender, current);
+        Room room = requireRoom(roomName);
+        String nick = s.getNickname();
+
+        // Aislamiento: solo los miembros pueden publicar en la sala
+        if (!room.isMember(nick)) {
+            throw new NotRoomMemberException(
+                    "No eres miembro de la sala '" + room.getName() + "'.", room.getName());
+        }
+        if (text == null || text.trim().isEmpty()) {
+            throw new ChatException("El mensaje no puede estar vacio.");
+        }
+
+        long id = roomMessageIdCounter.incrementAndGet();
+        RoomMessage msg = new RoomMessage(id, room.getName(), nick, text.trim(), now());
+
+        // Difusion: solo a los miembros de ESTA sala y nunca al emisor
+        int recipients = notifyRoomMembers(room, nick, prx -> prx.onRoomMessageAsync(msg));
+
+        log("#" + room.getName() + " <" + nick + "> mensaje #" + id
+                + " difundido a " + recipients + " miembro(s)");
+        return id;
+    }
+
+    /**
+     * Envia un callback asincrono a cada miembro de la sala con sesion activa,
+     * excepto a {@code excludedNick}.
+     * @return numero de miembros notificados
+     */
+    private int notifyRoomMembers(Room room, String excludedNick,
+                                  Function<ClientCallbackPrx, CompletableFuture<Void>> call) {
+        int count = 0;
+        for (String member : room.membersSnapshot()) {
+            if (member.equals(excludedNick)) {
+                continue;
+            }
+            ClientSession target = sessions.get(member);
+            if (target != null) {
+                notifyClient(target, call);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private Room requireRoom(String roomName) throws ChatException {
+        if (roomName == null || roomName.trim().isEmpty()) {
+            throw new ChatException("Debe indicar el nombre de la sala.");
+        }
+        String name = roomName.trim();
+        if (name.startsWith("#")) {
+            name = name.substring(1);
+        }
+        Room room = rooms.get(key(name));
+        if (room == null) {
+            throw new RoomNotFoundException("La sala '" + name + "' no existe.", name);
+        }
+        return room;
+    }
+
+    private String validateRoomName(String roomName) throws ChatException {
+        String name = roomName == null ? "" : roomName.trim();
+        if (name.startsWith("#")) {
+            name = name.substring(1);
+        }
+        if (!ROOM_NAME.matcher(name).matches()) {
+            throw new ChatException("Nombre de sala invalido: use de 1 a 32 caracteres "
+                    + "(letras, numeros, '_' o '-').");
+        }
+        return name;
+    }
+
+    private static String key(String roomName) {
+        return roomName.toLowerCase(java.util.Locale.ROOT);
     }
 
     // =====================================================================

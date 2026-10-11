@@ -165,6 +165,156 @@ public interface ClientCallbackPrx extends com.zeroc.Ice.ObjectPrx
         return f;
     }
 
+    default void onRoomCreated(String room, String owner)
+    {
+        onRoomCreated(room, owner, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void onRoomCreated(String room, String owner, java.util.Map<String, String> context)
+    {
+        _iceI_onRoomCreatedAsync(room, owner, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomCreatedAsync(String room, String owner)
+    {
+        return _iceI_onRoomCreatedAsync(room, owner, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomCreatedAsync(String room, String owner, java.util.Map<String, String> context)
+    {
+        return _iceI_onRoomCreatedAsync(room, owner, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_room -
+     * @param iceP_owner -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_onRoomCreatedAsync(String iceP_room, String iceP_owner, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "onRoomCreated", null, sync, null);
+        f.invoke(false, context, null, ostr -> {
+                     ostr.writeString(iceP_room);
+                     ostr.writeString(iceP_owner);
+                 }, null);
+        return f;
+    }
+
+    default void onRoomMessage(RoomMessage message)
+    {
+        onRoomMessage(message, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void onRoomMessage(RoomMessage message, java.util.Map<String, String> context)
+    {
+        _iceI_onRoomMessageAsync(message, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMessageAsync(RoomMessage message)
+    {
+        return _iceI_onRoomMessageAsync(message, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMessageAsync(RoomMessage message, java.util.Map<String, String> context)
+    {
+        return _iceI_onRoomMessageAsync(message, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_message -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_onRoomMessageAsync(RoomMessage iceP_message, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "onRoomMessage", null, sync, null);
+        f.invoke(false, context, null, ostr -> {
+                     RoomMessage.ice_write(ostr, iceP_message);
+                 }, null);
+        return f;
+    }
+
+    default void onRoomMemberJoined(String room, String nickname)
+    {
+        onRoomMemberJoined(room, nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void onRoomMemberJoined(String room, String nickname, java.util.Map<String, String> context)
+    {
+        _iceI_onRoomMemberJoinedAsync(room, nickname, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMemberJoinedAsync(String room, String nickname)
+    {
+        return _iceI_onRoomMemberJoinedAsync(room, nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMemberJoinedAsync(String room, String nickname, java.util.Map<String, String> context)
+    {
+        return _iceI_onRoomMemberJoinedAsync(room, nickname, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_room -
+     * @param iceP_nickname -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_onRoomMemberJoinedAsync(String iceP_room, String iceP_nickname, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "onRoomMemberJoined", null, sync, null);
+        f.invoke(false, context, null, ostr -> {
+                     ostr.writeString(iceP_room);
+                     ostr.writeString(iceP_nickname);
+                 }, null);
+        return f;
+    }
+
+    default void onRoomMemberLeft(String room, String nickname)
+    {
+        onRoomMemberLeft(room, nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext);
+    }
+
+    default void onRoomMemberLeft(String room, String nickname, java.util.Map<String, String> context)
+    {
+        _iceI_onRoomMemberLeftAsync(room, nickname, context, true).waitForResponse();
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMemberLeftAsync(String room, String nickname)
+    {
+        return _iceI_onRoomMemberLeftAsync(room, nickname, com.zeroc.Ice.ObjectPrx.noExplicitContext, false);
+    }
+
+    default java.util.concurrent.CompletableFuture<Void> onRoomMemberLeftAsync(String room, String nickname, java.util.Map<String, String> context)
+    {
+        return _iceI_onRoomMemberLeftAsync(room, nickname, context, false);
+    }
+
+    /**
+     * @hidden
+     * @param iceP_room -
+     * @param iceP_nickname -
+     * @param context -
+     * @param sync -
+     * @return -
+     **/
+    default com.zeroc.IceInternal.OutgoingAsync<Void> _iceI_onRoomMemberLeftAsync(String iceP_room, String iceP_nickname, java.util.Map<String, String> context, boolean sync)
+    {
+        com.zeroc.IceInternal.OutgoingAsync<Void> f = new com.zeroc.IceInternal.OutgoingAsync<>(this, "onRoomMemberLeft", null, sync, null);
+        f.invoke(false, context, null, ostr -> {
+                     ostr.writeString(iceP_room);
+                     ostr.writeString(iceP_nickname);
+                 }, null);
+        return f;
+    }
+
     /**
      * Contacts the remote server to verify that the object implements this type.
      * Raises a local exception if a communication error occurs.

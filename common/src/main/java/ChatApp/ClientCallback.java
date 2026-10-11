@@ -25,6 +25,14 @@ public interface ClientCallback extends com.zeroc.Ice.Object
 
     void onPrivateMessageFailed(long messageId, String recipient, String reason, com.zeroc.Ice.Current current);
 
+    void onRoomCreated(String room, String owner, com.zeroc.Ice.Current current);
+
+    void onRoomMessage(RoomMessage message, com.zeroc.Ice.Current current);
+
+    void onRoomMemberJoined(String room, String nickname, com.zeroc.Ice.Current current);
+
+    void onRoomMemberLeft(String room, String nickname, com.zeroc.Ice.Current current);
+
     /** @hidden */
     static final String[] _iceIds =
     {
@@ -125,6 +133,84 @@ public interface ClientCallback extends com.zeroc.Ice.Object
         return inS.setResult(inS.writeEmptyParams());
     }
 
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_onRoomCreated(ClientCallback obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_room;
+        String iceP_owner;
+        iceP_room = istr.readString();
+        iceP_owner = istr.readString();
+        inS.endReadParams();
+        obj.onRoomCreated(iceP_room, iceP_owner, current);
+        return inS.setResult(inS.writeEmptyParams());
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_onRoomMessage(ClientCallback obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        RoomMessage iceP_message;
+        iceP_message = RoomMessage.ice_read(istr);
+        inS.endReadParams();
+        obj.onRoomMessage(iceP_message, current);
+        return inS.setResult(inS.writeEmptyParams());
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_onRoomMemberJoined(ClientCallback obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_room;
+        String iceP_nickname;
+        iceP_room = istr.readString();
+        iceP_nickname = istr.readString();
+        inS.endReadParams();
+        obj.onRoomMemberJoined(iceP_room, iceP_nickname, current);
+        return inS.setResult(inS.writeEmptyParams());
+    }
+
+    /**
+     * @hidden
+     * @param obj -
+     * @param inS -
+     * @param current -
+     * @return -
+    **/
+    static java.util.concurrent.CompletionStage<com.zeroc.Ice.OutputStream> _iceD_onRoomMemberLeft(ClientCallback obj, final com.zeroc.IceInternal.Incoming inS, com.zeroc.Ice.Current current)
+    {
+        com.zeroc.Ice.Object._iceCheckMode(null, current.mode);
+        com.zeroc.Ice.InputStream istr = inS.startReadParams();
+        String iceP_room;
+        String iceP_nickname;
+        iceP_room = istr.readString();
+        iceP_nickname = istr.readString();
+        inS.endReadParams();
+        obj.onRoomMemberLeft(iceP_room, iceP_nickname, current);
+        return inS.setResult(inS.writeEmptyParams());
+    }
+
     /** @hidden */
     final static String[] _iceOps =
     {
@@ -134,6 +220,10 @@ public interface ClientCallback extends com.zeroc.Ice.Object
         "ice_ping",
         "onPrivateMessage",
         "onPrivateMessageFailed",
+        "onRoomCreated",
+        "onRoomMemberJoined",
+        "onRoomMemberLeft",
+        "onRoomMessage",
         "onUserConnected",
         "onUserDisconnected"
     };
@@ -177,9 +267,25 @@ public interface ClientCallback extends com.zeroc.Ice.Object
             }
             case 6:
             {
-                return _iceD_onUserConnected(this, in, current);
+                return _iceD_onRoomCreated(this, in, current);
             }
             case 7:
+            {
+                return _iceD_onRoomMemberJoined(this, in, current);
+            }
+            case 8:
+            {
+                return _iceD_onRoomMemberLeft(this, in, current);
+            }
+            case 9:
+            {
+                return _iceD_onRoomMessage(this, in, current);
+            }
+            case 10:
+            {
+                return _iceD_onUserConnected(this, in, current);
+            }
+            case 11:
             {
                 return _iceD_onUserDisconnected(this, in, current);
             }

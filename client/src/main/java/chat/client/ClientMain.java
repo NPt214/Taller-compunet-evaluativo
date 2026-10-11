@@ -4,6 +4,7 @@ import ChatApp.ChatException;
 import ChatApp.ChatRoomPrx;
 import ChatApp.ClientCallbackPrx;
 import ChatApp.NicknameInUseException;
+import ChatApp.RoomInfo;
 import com.zeroc.Ice.ACMClose;
 import com.zeroc.Ice.ACMHeartbeat;
 import com.zeroc.Ice.Communicator;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
@@ -35,6 +38,8 @@ public class ClientMain {
     // Debe coincidir con ChatRoomI.SESSION_TIMEOUT_SECONDS del servidor
     private static final int SESSION_TIMEOUT_SECONDS = 10;
 
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     private final Communicator communicator;
     private final ChatRoomPrx server;
     private final ClientCallbackI callback;
@@ -42,6 +47,9 @@ public class ClientMain {
 
     // Nickname de la sesion activa (null si no hay sesion)
     private volatile String nickname;
+
+    // RF-03: sala a la que va el texto escrito sin comando (null si ninguna)
+    private volatile String activeRoom;
 
     public static void main(String[] args) {
         int exitCode = 0;
@@ -137,8 +145,26 @@ public class ClientMain {
 
     /** @return false si el usuario pidio salir. */
     private boolean handleCommand(String line) {
+        // RF-03: texto sin '/' se envia a la sala activa
+        if (!line.startsWith("/")) {
+            if (activeRoom == null) {
+                Console.println("No hay sala activa. Usa /join <sala>, /use <sala> "
+                        + "o /help para ver los comandos.");
+            } else {
+                sendRoom(activeRoom, line);
+            }
+            return true;
+        }
+
         String[] parts = line.split("\\s+", 3);
         String cmd = parts[0].toLowerCase();
+
+        // Los nombres de sala no admiten espacios: se rechaza en vez de truncar
+        if (parts.length == 3 && (cmd.equals("/create") || cmd.equals("/join")
+                || cmd.equals("/leave") || cmd.equals("/use") || cmd.equals("/members"))) {
+            Console.println("[ERROR] El nombre de la sala no puede contener espacios.");
+            return true;
+        }
 
         switch (cmd) {
             case "/help":
@@ -167,6 +193,43 @@ public class ClientMain {
                     sendPrivate(parts[1], parts[2]);
                 }
                 break;
+            case "/create":
+                if (parts.length < 2) {
+                    Console.println("Uso: /create <sala>");
+                } else {
+                    createRoom(parts[1]);
+                }
+                break;
+            case "/join":
+                if (parts.length < 2) {
+                    Console.println("Uso: /join <sala>");
+                } else {
+                    joinRoom(parts[1]);
+                }
+                break;
+            case "/leave":
+                leaveRoom(parts.length >= 2 ? parts[1] : activeRoom);
+                break;
+            case "/rooms":
+                listRooms();
+                break;
+            case "/members":
+                roomMembers(parts.length >= 2 ? parts[1] : activeRoom);
+                break;
+            case "/use":
+                if (parts.length < 2) {
+                    Console.println("Uso: /use <sala>");
+                } else {
+                    useRoom(parts[1]);
+                }
+                break;
+            case "/room":
+                if (parts.length < 3) {
+                    Console.println("Uso: /room <sala> <texto>");
+                } else {
+                    sendRoom(parts[1], parts[2]);
+                }
+                break;
             case "/quit":
             case "/exit":
                 return false;
@@ -179,6 +242,14 @@ public class ClientMain {
     private void printHelp() {
         Console.println("Comandos disponibles:");
         Console.println("  /msg <nickname> <txt>  Envia un mensaje privado");
+        Console.println("  /create <sala>         Crea una sala (quedas unido y activa)");
+        Console.println("  /rooms                 Catalogo de salas ('*' = eres miembro)");
+        Console.println("  /join <sala>           Te une a una sala (puedes estar en varias)");
+        Console.println("  /leave [sala]          Sales de la sala indicada o de la activa");
+        Console.println("  /use <sala>            Cambia la sala activa");
+        Console.println("  /room <sala> <txt>     Envia un mensaje a una sala concreta");
+        Console.println("  <texto>                Sin '/', se envia a la sala activa");
+        Console.println("  /members [sala]        Miembros de la sala indicada o de la activa");
         Console.println("  /users                 Lista los usuarios conectados");
         Console.println("  /login <nickname>      Inicia sesion (si no hay una activa)");
         Console.println("  /logout                Cierra la sesion actual");
@@ -225,6 +296,7 @@ public class ClientMain {
             Console.println("[AVISO] El servidor no respondio al logout: " + e);
         }
         nickname = null;
+        setActiveRoom(null);
         callback.getOnlineUsers().clear();
     }
 
@@ -288,6 +360,188 @@ public class ClientMain {
                 Console.event("[ERROR] Fallo de comunicacion con el servidor: " + cause);
             }
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // RF-03: salas / canales
+    // ---------------------------------------------------------------------
+
+    private void createRoom(String room) {
+        if (!requireLogin()) {
+            return;
+        }
+        String name = stripHash(room);
+        try {
+            server.createRoom(nickname, name);
+            setActiveRoom(name);
+            Console.println("[OK] Sala #" + name + " creada. Ya eres miembro y es tu sala activa.");
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    private void joinRoom(String room) {
+        if (!requireLogin()) {
+            return;
+        }
+        String name = stripHash(room);
+        try {
+            String[] members = server.joinRoom(nickname, name);
+            name = canonicalRoomName(name);
+            setActiveRoom(name);
+            Console.println("[OK] Te uniste a #" + name + " (sala activa). Miembros ("
+                    + members.length + "): " + String.join(", ", members));
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    private void leaveRoom(String room) {
+        if (!requireLogin()) {
+            return;
+        }
+        if (room == null) {
+            Console.println("Uso: /leave <sala> (no hay sala activa)");
+            return;
+        }
+        String name = stripHash(room);
+        try {
+            server.leaveRoom(nickname, name);
+            if (activeRoom != null && activeRoom.equalsIgnoreCase(name)) {
+                setActiveRoom(null);
+            }
+            Console.println("[OK] Saliste de #" + name + ".");
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    private void listRooms() {
+        if (!requireLogin()) {
+            return;
+        }
+        try {
+            RoomInfo[] rooms = server.listRooms(nickname);
+            if (rooms.length == 0) {
+                Console.println("No hay salas. Crea una con /create <sala>.");
+                return;
+            }
+            Console.println("Salas disponibles (" + rooms.length + "):");
+            for (RoomInfo r : rooms) {
+                Console.println("  " + (r.joined ? "* " : "  ") + "#" + r.name
+                        + "  (" + r.memberCount + " miembro(s), creada por " + r.owner + ")"
+                        + (activeRoom != null && activeRoom.equalsIgnoreCase(r.name)
+                        ? "  <- activa" : ""));
+            }
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    private void roomMembers(String room) {
+        if (!requireLogin()) {
+            return;
+        }
+        if (room == null) {
+            Console.println("Uso: /members <sala> (no hay sala activa)");
+            return;
+        }
+        String name = stripHash(room);
+        try {
+            String[] members = server.getRoomMembers(nickname, name);
+            Console.println("Miembros de #" + name + " (" + members.length + "):");
+            for (String m : members) {
+                Console.println("  - " + m + (m.equals(nickname) ? " (tu)" : ""));
+            }
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    /** Cambia la sala activa verificando que el usuario sea miembro. */
+    private void useRoom(String room) {
+        if (!requireLogin()) {
+            return;
+        }
+        String name = stripHash(room);
+        try {
+            server.getRoomMembers(nickname, name); // valida existencia y membresia
+            name = canonicalRoomName(name);
+            setActiveRoom(name);
+            Console.println("[OK] Sala activa: #" + name);
+        } catch (ChatException e) {
+            Console.println("[ERROR] " + e.reason);
+        } catch (com.zeroc.Ice.LocalException e) {
+            Console.println("[ERROR] Fallo de comunicacion con el servidor: " + e);
+        }
+    }
+
+    /**
+     * Difunde un mensaje en la sala con una invocacion asincrona (AMI).
+     * El servidor no lo reenvia al emisor, asi que el eco local se imprime
+     * al recibir la confirmacion.
+     */
+    private void sendRoom(String room, String text) {
+        if (!requireLogin()) {
+            return;
+        }
+        String name = stripHash(room);
+        String me = nickname;
+        server.sendRoomMessageAsync(me, name, text).whenComplete((id, ex) -> {
+            if (ex == null) {
+                Console.event("[" + LocalTime.now().format(TIME) + "] [#" + name + "] "
+                        + me + " (tu): " + text);
+                return;
+            }
+            Throwable cause = ex instanceof CompletionException && ex.getCause() != null
+                    ? ex.getCause() : ex;
+            if (cause instanceof ChatException) {
+                Console.event("[ERROR] " + ((ChatException) cause).reason);
+            } else {
+                Console.event("[ERROR] Fallo de comunicacion con el servidor: " + cause);
+            }
+        });
+    }
+
+    /** Nombre real de la sala (el servidor no distingue mayusculas). */
+    private String canonicalRoomName(String name) {
+        try {
+            for (RoomInfo r : server.listRooms(nickname)) {
+                if (r.name.equalsIgnoreCase(name)) {
+                    return r.name;
+                }
+            }
+        } catch (ChatException | com.zeroc.Ice.LocalException ignored) {
+            // si falla se conserva el nombre escrito por el usuario
+        }
+        return name;
+    }
+
+    private void setActiveRoom(String room) {
+        activeRoom = room;
+        Console.setPrompt(room == null ? "> " : "[#" + room + "]> ");
+    }
+
+    private boolean requireLogin() {
+        if (nickname == null) {
+            Console.println("Debe iniciar sesion primero.");
+            return false;
+        }
+        return true;
+    }
+
+    private static String stripHash(String room) {
+        return room.startsWith("#") ? room.substring(1) : room;
     }
 
     /**

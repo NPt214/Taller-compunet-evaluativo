@@ -2,6 +2,7 @@ package chat.client;
 
 import ChatApp.ClientCallback;
 import ChatApp.PrivateMessage;
+import ChatApp.RoomMessage;
 import com.zeroc.Ice.Current;
 
 import java.time.LocalTime;
@@ -59,6 +60,30 @@ public class ClientCallbackI implements ClientCallback {
                                        Current current) {
         Console.event("[" + now() + "] [ERROR] El mensaje #" + messageId + " para '"
                 + recipient + "' no se entrego: " + reason + ".");
+    }
+
+    // ---- RF-03: salas ------------------------------------------------
+
+    @Override
+    public void onRoomCreated(String room, String owner, Current current) {
+        Console.event("[" + now() + "] [SALAS] " + owner + " creo la sala #" + room
+                + " (usa /join " + room + ")");
+    }
+
+    @Override
+    public void onRoomMessage(RoomMessage message, Current current) {
+        Console.event("[" + message.timestamp + "] [#" + message.room + "] "
+                + message.sender + ": " + message.text);
+    }
+
+    @Override
+    public void onRoomMemberJoined(String room, String nickname, Current current) {
+        Console.event("[" + now() + "] [#" + room + "] + " + nickname + " se unio a la sala.");
+    }
+
+    @Override
+    public void onRoomMemberLeft(String room, String nickname, Current current) {
+        Console.event("[" + now() + "] [#" + room + "] - " + nickname + " salio de la sala.");
     }
 
     private static String now() {

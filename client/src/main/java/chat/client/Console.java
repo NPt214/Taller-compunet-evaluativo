@@ -8,7 +8,7 @@ package chat.client;
  */
 public final class Console {
 
-    private static final String PROMPT = "> ";
+    private static volatile String prompt = "> ";
     private static volatile boolean promptVisible = false;
 
     private Console() {
@@ -21,7 +21,7 @@ public final class Console {
         }
         System.out.println(text);
         if (promptVisible) {
-            System.out.print(PROMPT);
+            System.out.print(prompt);
         }
         System.out.flush();
     }
@@ -33,9 +33,14 @@ public final class Console {
     }
 
     public static synchronized void prompt() {
-        System.out.print(PROMPT);
+        System.out.print(prompt);
         System.out.flush();
         promptVisible = true;
+    }
+
+    /** Cambia el prompt (p. ej. para mostrar la sala activa). */
+    public static synchronized void setPrompt(String newPrompt) {
+        prompt = newPrompt;
     }
 
     public static synchronized void hidePrompt() {
