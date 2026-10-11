@@ -1,0 +1,155 @@
+package ChatApp;
+
+public class DeliveryReceipt implements java.lang.Cloneable,
+                                        java.io.Serializable
+{
+    public long messageId;
+
+    public String recipient;
+
+    public String timestamp;
+
+    public DeliveryReceipt()
+    {
+        this.recipient = "";
+        this.timestamp = "";
+    }
+
+    public DeliveryReceipt(long messageId, String recipient, String timestamp)
+    {
+        this.messageId = messageId;
+        this.recipient = recipient;
+        this.timestamp = timestamp;
+    }
+
+    public boolean equals(java.lang.Object rhs)
+    {
+        if(this == rhs)
+        {
+            return true;
+        }
+        DeliveryReceipt r = null;
+        if(rhs instanceof DeliveryReceipt)
+        {
+            r = (DeliveryReceipt)rhs;
+        }
+
+        if(r != null)
+        {
+            if(this.messageId != r.messageId)
+            {
+                return false;
+            }
+            if(this.recipient != r.recipient)
+            {
+                if(this.recipient == null || r.recipient == null || !this.recipient.equals(r.recipient))
+                {
+                    return false;
+                }
+            }
+            if(this.timestamp != r.timestamp)
+            {
+                if(this.timestamp == null || r.timestamp == null || !this.timestamp.equals(r.timestamp))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public int hashCode()
+    {
+        int h_ = 5381;
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, "::ChatApp::DeliveryReceipt");
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, messageId);
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, recipient);
+        h_ = com.zeroc.IceInternal.HashUtil.hashAdd(h_, timestamp);
+        return h_;
+    }
+
+    public DeliveryReceipt clone()
+    {
+        DeliveryReceipt c = null;
+        try
+        {
+            c = (DeliveryReceipt)super.clone();
+        }
+        catch(CloneNotSupportedException ex)
+        {
+            assert false;
+        }
+        return c;
+    }
+
+    public void ice_writeMembers(com.zeroc.Ice.OutputStream ostr)
+    {
+        ostr.writeLong(this.messageId);
+        ostr.writeString(this.recipient);
+        ostr.writeString(this.timestamp);
+    }
+
+    public void ice_readMembers(com.zeroc.Ice.InputStream istr)
+    {
+        this.messageId = istr.readLong();
+        this.recipient = istr.readString();
+        this.timestamp = istr.readString();
+    }
+
+    static public void ice_write(com.zeroc.Ice.OutputStream ostr, DeliveryReceipt v)
+    {
+        if(v == null)
+        {
+            _nullMarshalValue.ice_writeMembers(ostr);
+        }
+        else
+        {
+            v.ice_writeMembers(ostr);
+        }
+    }
+
+    static public DeliveryReceipt ice_read(com.zeroc.Ice.InputStream istr)
+    {
+        DeliveryReceipt v = new DeliveryReceipt();
+        v.ice_readMembers(istr);
+        return v;
+    }
+
+    static public void ice_write(com.zeroc.Ice.OutputStream ostr, int tag, java.util.Optional<DeliveryReceipt> v)
+    {
+        if(v != null && v.isPresent())
+        {
+            ice_write(ostr, tag, v.get());
+        }
+    }
+
+    static public void ice_write(com.zeroc.Ice.OutputStream ostr, int tag, DeliveryReceipt v)
+    {
+        if(ostr.writeOptional(tag, com.zeroc.Ice.OptionalFormat.FSize))
+        {
+            int pos = ostr.startSize();
+            ice_write(ostr, v);
+            ostr.endSize(pos);
+        }
+    }
+
+    static public java.util.Optional<DeliveryReceipt> ice_read(com.zeroc.Ice.InputStream istr, int tag)
+    {
+        if(istr.readOptional(tag, com.zeroc.Ice.OptionalFormat.FSize))
+        {
+            istr.skip(4);
+            return java.util.Optional.of(DeliveryReceipt.ice_read(istr));
+        }
+        else
+        {
+            return java.util.Optional.empty();
+        }
+    }
+
+    private static final DeliveryReceipt _nullMarshalValue = new DeliveryReceipt();
+
+    public static final long serialVersionUID = 8043669511263206624L;
+}

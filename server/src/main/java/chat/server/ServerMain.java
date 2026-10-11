@@ -1,6 +1,7 @@
 package chat.server;
 
 import com.zeroc.Ice.Communicator;
+import com.zeroc.Ice.InitializationData;
 import com.zeroc.Ice.ObjectAdapter;
 import com.zeroc.Ice.Util;
 
@@ -9,22 +10,23 @@ public class ServerMain {
     public static void main(String[] args) {
         int exitCode = 0;
 
-        // Inicializacion del Communicator dentro de try-with-resources
-        try (Communicator communicator = Util.initialize(args)) {
+        InitializationData initData = new InitializationData();
+        initData.properties = Util.createProperties(args);
+        setDefault(initData, "Ice.ThreadPool.Server.Size", "4");
+        setDefault(initData, "Ice.ThreadPool.Server.SizeMax", "16");
 
-            // 1. Crear ObjectAdapter vinculado al puerto TCP 10000
+        try (Communicator communicator = Util.initialize(args, initData)) {
+
             ObjectAdapter adapter =
                     communicator.createObjectAdapterWithEndpoints(
                             "ChatAdapter",
                             "default -p 10000"
                     );
 
-            // 2. Instanciar el Servant y registrarlo con identidad "ChatService"
             ChatRoomI servant = new ChatRoomI();
 
             adapter.add(servant, Util.stringToIdentity("ChatService"));
 
-            // 3. Activar el adaptador para recibir llamadas RPC
             adapter.activate();
 
             System.out.println("=================================================");
@@ -34,7 +36,6 @@ public class ServerMain {
             System.out.println("=================================================");
             System.out.println("Esperando llamadas remotas de clientes...");
 
-            // 4. Bloquear el hilo principal hasta orden de apagado (Ctrl+C)
             communicator.waitForShutdown();
 
         } catch (Exception e) {
@@ -47,5 +48,11 @@ public class ServerMain {
         }
 
         System.exit(exitCode);
+    }
+
+    private static void setDefault(InitializationData initData, String key, String value) {
+        if (initData.properties.getProperty(key).isEmpty()) {
+            initData.properties.setProperty(key, value);
+        }
     }
 }

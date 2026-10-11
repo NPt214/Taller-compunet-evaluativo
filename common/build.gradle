@@ -2,20 +2,55 @@ plugins {
     id 'java-library'
 }
 
-// Tarea para compilar Slice a Java antes de compilar el codigo fuente
+def findSlice2java() {
+    def isWindows = System.getProperty('os.name').toLowerCase().contains('win')
+    def exeName = isWindows ? 'slice2java.exe' : 'slice2java'
+    def dirs = []
+    def path = System.getenv('PATH')
+    if (path) {
+        dirs.addAll(path.split(File.pathSeparator))
+    }
+    def iceHome = System.getenv('ICE_HOME')
+    if (iceHome) {
+        dirs.add(iceHome + File.separator + 'bin')
+    }
+    if (isWindows) {
+        def zeroc = new File('C:\\Program Files\\ZeroC')
+        if (zeroc.isDirectory()) {
+            zeroc.listFiles().findAll { it.name.startsWith('Ice-3.7') }
+                    .sort { it.name }.reverse()
+                    .each { dirs.add(it.absolutePath + File.separator + 'bin') }
+        }
+    }
+    for (d in dirs) {
+        def f = new File(d, exeName)
+        if (f.isFile()) {
+            return f.absolutePath
+        }
+    }
+    return null
+}
+
+def slice2java = findSlice2java()
+
 task compileSlice(type: Exec) {
     description = 'Compila Chat.ice a codigo fuente Java usando slice2java'
+
+    onlyIf {
+        if (slice2java == null) {
+            logger.warn('slice2java no encontrado: se usan los stubs ya generados en src/main/java/ChatApp')
+        }
+        slice2java != null
+    }
 
     doFirst {
         file("src/main/java").mkdirs()
     }
 
-    // Invoca la utilidad nativa slice2java de ZeroC
-    commandLine 'slice2java',
+    commandLine slice2java ?: 'slice2java',
             '--output-dir',
             'src/main/java',
             'src/main/slice/Chat.ice'
 }
 
-// Asegura que Java dependa de la generacion previa del codigo de Slice
 compileJava.dependsOn compileSlice

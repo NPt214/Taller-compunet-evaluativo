@@ -1,6 +1,5 @@
 module ChatApp {
 
-    // Estructura que modela un mensaje del chat
     struct ChatMessage {
         long id;
         string sender;
@@ -8,35 +7,115 @@ module ChatApp {
         string timestamp;
     };
 
-    // Secuencias tipadas (equivalentes a arreglos/listas en Java)
     sequence<ChatMessage> MessageSeq;
     sequence<string> UserSeq;
 
-    // Excepción de usuario para validaciones de negocio
     exception ChatException {
         string reason;
     };
 
-    // Interfaz remota provista por el servidor Ice
+    exception NicknameInUseException extends ChatException {
+        string nickname;
+    };
+
+    struct PrivateMessage {
+        long id;
+        string sender;
+        string recipient;
+        string text;
+        string timestamp;
+    };
+
+    struct DeliveryReceipt {
+        long messageId;
+        string recipient;
+        string timestamp;
+    };
+
+    exception UserNotFoundException extends ChatException {
+        string nickname;
+    };
+
+    exception UserOfflineException extends ChatException {
+        string nickname;
+    };
+
+    struct RoomMessage {
+        long id;
+        string room;
+        string sender;
+        string text;
+        string timestamp;
+    };
+
+    struct RoomInfo {
+        string name;
+        string owner;
+        int memberCount;
+        bool joined;
+    };
+
+    sequence<RoomInfo> RoomSeq;
+
+    exception RoomAlreadyExistsException extends ChatException {
+        string room;
+    };
+
+    exception RoomNotFoundException extends ChatException {
+        string room;
+    };
+
+    exception NotRoomMemberException extends ChatException {
+        string room;
+    };
+
+    interface ClientCallback {
+
+        void onUserConnected(string nickname);
+
+        void onUserDisconnected(string nickname);
+
+        void onPrivateMessage(PrivateMessage message);
+
+        void onPrivateMessageFailed(long messageId, string recipient, string reason);
+
+        void onRoomCreated(string room, string owner);
+
+        void onRoomMessage(RoomMessage message);
+
+        void onRoomMemberJoined(string room, string nickname);
+
+        void onRoomMemberLeft(string room, string nickname);
+    };
+
     interface ChatRoom {
 
-        // Registra un usuario; falla si el nickname ya existe
-        void login(string nickname) throws ChatException;
+        void login(string nickname, ClientCallback* callback) throws ChatException;
 
-        // Envía un mensaje a la sala compartida
         void postMessage(string nickname, string message) throws ChatException;
 
-        // Consulta de mensajes pendientes
-        // idempotent permite reintentos seguros de red
         idempotent MessageSeq getPendingMessages(
             string nickname,
             long lastMessageId
         );
 
-        // Retorna la lista de usuarios activos actualmente
         idempotent UserSeq getOnlineUsers();
 
-        // Cierra sesión y desvincula al usuario
         void logout(string nickname);
+
+        DeliveryReceipt sendPrivateMessage(string sender, string recipient, string text)
+            throws ChatException;
+
+        void createRoom(string nickname, string room) throws ChatException;
+
+        idempotent RoomSeq listRooms(string nickname) throws ChatException;
+
+        UserSeq joinRoom(string nickname, string room) throws ChatException;
+
+        void leaveRoom(string nickname, string room) throws ChatException;
+
+        idempotent UserSeq getRoomMembers(string nickname, string room) throws ChatException;
+
+        long sendRoomMessage(string sender, string room, string text) throws ChatException;
     };
 };

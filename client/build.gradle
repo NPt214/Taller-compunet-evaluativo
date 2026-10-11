@@ -1,0 +1,12 @@
+plugins {
+    id 'application'
+}
+dependencies {
+    implementation project (':common')
+}
+application {
+    mainClass = 'chat.client.ClientMain'
+}
+run {
+    standardInput = System.in
+}
