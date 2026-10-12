@@ -1,6 +1,3 @@
-// Señalizacion de llamadas de voz (RF-05 1 a 1 y RF-06 grupal).
-// Archivo independiente: no usa #include y vive en su propio modulo.
-// El audio NO viaja por Ice: solo se negocia aqui; el flujo de voz va por UDP.
 module CallApp {
 
     // Direccion UDP donde un cliente recibe audio
