@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 public class ChatRoomI implements ChatRoom {
 
@@ -21,6 +22,33 @@ public class ChatRoomI implements ChatRoom {
     private final ConcurrentHashMap<String, Set<String>> rooms = new ConcurrentHashMap<>();
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // Gancho (room, nickname) que se dispara cuando alguien sale de una sala; lo usa el
+    // servicio de llamadas para sacar al usuario de la llamada grupal de esa sala.
+    private volatile BiConsumer<String, String> onMemberLeft;
+
+    public void setOnMemberLeft(BiConsumer<String, String> listener) {
+        this.onMemberLeft = listener;
+    }
+
+    /** true si el usuario pertenece actualmente a la sala (sin bloqueos). */
+    public boolean isMember(String room, String nickname) {
+        Set<String> members = rooms.get(room);
+        return members != null && members.contains(nickname);
+    }
+
+    /** Copia de los miembros actuales de una sala (vacia si no existe). */
+    public Set<String> membersOf(String room) {
+        Set<String> members = rooms.get(room);
+        return members == null ? new java.util.HashSet<>() : new java.util.HashSet<>(members);
+    }
+
+    private void fireMemberLeft(String room, String nickname) {
+        BiConsumer<String, String> l = onMemberLeft;
+        if (l != null) {
+            l.accept(room, nickname);
+        }
+    }
 
     @Override
     public synchronized void login(String nickname, Current current) throws ChatException {
@@ -106,6 +134,7 @@ public class ChatRoomI implements ChatRoom {
         }
 
         System.out.println("[ICE-SERVER] " + nickname + " abandono la sala " + room);
+        fireMemberLeft(room, nickname);
     }
 
     @Override
@@ -174,8 +203,10 @@ public class ChatRoomI implements ChatRoom {
 
         if (onlineUsers.remove(nickname)) {
 
-            for (Set<String> members : rooms.values()) {
-                members.remove(nickname);
+            for (java.util.Map.Entry<String, Set<String>> e : rooms.entrySet()) {
+                if (e.getValue().remove(nickname)) {
+                    fireMemberLeft(e.getKey(), nickname);
+                }
             }
 
             System.out.println("[ICE-SERVER] Usuario desconectado: " + nickname);

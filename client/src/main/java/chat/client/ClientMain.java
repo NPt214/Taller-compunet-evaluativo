@@ -1,5 +1,8 @@
 package chat.client;
 
+import CallApp.CallCallbackPrx;
+import CallApp.CallException;
+import CallApp.CallServicePrx;
 import ChatApp.ChatException;
 import ChatApp.ChatMessage;
 import ChatApp.ChatRoomPrx;
@@ -9,6 +12,8 @@ import PrivateChatApp.PrivateCallbackPrx;
 import PrivateChatApp.PrivateChatException;
 import PrivateChatApp.PrivateChatPrx;
 import PrivateChatApp.PrivateMessage;
+import chat.client.call.CallCallbackI;
+import chat.client.call.CallManager;
 import com.zeroc.Ice.ACMClose;
 import com.zeroc.Ice.ACMHeartbeat;
 import com.zeroc.Ice.Communicator;
@@ -65,7 +70,10 @@ public class ClientMain {
             PrivateChatPrx privatePrx = PrivateChatPrx.checkedCast(
                     communicator.stringToProxy("PrivateChatService:default -h " + host + " -p " + port));
 
-            if (chatPrx == null || privatePrx == null) {
+            CallServicePrx callPrx = CallServicePrx.checkedCast(
+                    communicator.stringToProxy("CallService:default -h " + host + " -p " + port));
+
+            if (chatPrx == null || privatePrx == null || callPrx == null) {
                 System.err.println("[ERROR] No se pudo conectar con el servidor.");
                 return;
             }
@@ -79,6 +87,14 @@ public class ClientMain {
             PrivateCallbackPrx callbackPrx = PrivateCallbackPrx.uncheckedCast(
                     callbackAdapter.add(new PrivateCallbackI(),
                             new Identity(UUID.randomUUID().toString(), "client")));
+
+            // ===================== VOZ: CALLBACKS DE LLAMADAS (Call.ice) =====================
+            // Mismo adaptador, otro servant: el servidor notifica llamadas entrantes, etc.
+            CallManager callManager = new CallManager(callPrx, host, ClientMain::say, ClientMain::event);
+            CallCallbackPrx callCallbackPrx = CallCallbackPrx.uncheckedCast(
+                    callbackAdapter.add(new CallCallbackI(callManager),
+                            new Identity(UUID.randomUUID().toString(), "client")));
+
             callbackAdapter.activate();
 
             Scanner scanner = new Scanner(System.in);
@@ -115,12 +131,30 @@ public class ClientMain {
                         throw e;
                     }
 
+                    try {
+                        callPrx.login(nickname, callCallbackPrx);
+                    } catch (CallException e) {
+                        // Si falla el tercer servicio, se deshacen los dos anteriores
+                        try {
+                            privatePrx.logout(nickname);
+                        } catch (Exception ignored) {
+                        }
+                        try {
+                            chatPrx.logout(nickname);
+                        } catch (Exception ignored) {
+                        }
+                        throw e;
+                    }
+
+                    callManager.setNickname(nickname);
                     say("Conectado correctamente como " + nickname);
                     break;
 
                 } catch (ChatException e) {
                     say("[ERROR] " + e.reason);
                 } catch (PrivateChatException e) {
+                    say("[ERROR] " + e.reason);
+                } catch (CallException e) {
                     say("[ERROR] " + e.reason);
                 }
             }
@@ -131,7 +165,7 @@ public class ClientMain {
 
             // Si se cierra la terminal con Ctrl+C tambien se libera el nickname
             Runtime.getRuntime().addShutdownHook(
-                    new Thread(() -> logoutQuietly(chatPrx, privatePrx, activeUser)));
+                    new Thread(() -> logoutQuietly(chatPrx, privatePrx, callPrx, callManager, activeUser)));
 
             // ===================== CHATROOM: HILO DE POLLING =====================
             Thread listenerThread = new Thread(() -> {
@@ -317,12 +351,66 @@ public class ClientMain {
                             break;
                         }
 
+                        // ----------------------- LLAMADAS DE VOZ (UDP) -----------------------
+
+                        case "/call": {
+
+                            if (arguments.isEmpty()) {
+                                say("Uso: /call <nickname>");
+                                break;
+                            }
+
+                            callManager.call(arguments);
+                            break;
+                        }
+
+                        case "/accept": {
+
+                            callManager.accept();
+                            break;
+                        }
+
+                        case "/reject": {
+
+                            callManager.reject();
+                            break;
+                        }
+
+                        case "/hangup": {
+
+                            callManager.hangup();
+                            break;
+                        }
+
+                        case "/gcall": {
+
+                            if (arguments.isEmpty()) {
+                                say("Uso: /gcall <sala>");
+                                break;
+                            }
+
+                            callManager.joinGroup(arguments);
+                            break;
+                        }
+
+                        case "/gleave": {
+
+                            callManager.leaveGroup();
+                            break;
+                        }
+
+                        case "/mute": {
+
+                            callManager.toggleMute();
+                            break;
+                        }
+
                         case "/exit":
                         case "/quit": {
 
                             running = false;
 
-                            logoutQuietly(chatPrx, privatePrx, activeUser);
+                            logoutQuietly(chatPrx, privatePrx, callPrx, callManager, activeUser);
 
                             say("Sesion cerrada.");
                             break;
@@ -344,13 +432,17 @@ public class ClientMain {
 
                     say("[ERROR] " + e.reason);
 
+                } catch (CallException e) {
+
+                    say("[ERROR] " + e.reason);
+
                 } catch (Exception e) {
 
                     System.err.println("[ERROR DE RED] " + e.getMessage());
                 }
             }
 
-            logoutQuietly(chatPrx, privatePrx, activeUser);
+            logoutQuietly(chatPrx, privatePrx, callPrx, callManager, activeUser);
             scanner.close();
 
         } catch (Exception e) {
@@ -394,6 +486,14 @@ public class ClientMain {
         say("/say <sala> <mensaje> Envia mensaje a una sala");
         say("--- 1 a 1 ---");
         say("/msg <nick> <mensaje> Envia un mensaje privado");
+        say("--- Voz (UDP) ---");
+        say("/call <nick>         Llama a un usuario");
+        say("/accept              Contesta la llamada entrante");
+        say("/reject              Rechaza la llamada entrante");
+        say("/hangup              Cuelga la llamada 1 a 1");
+        say("/gcall <sala>        Inicia o se une a la llamada de una sala");
+        say("/gleave              Sale de la llamada grupal");
+        say("/mute                Silencia / activa el microfono");
         say("--- General ---");
         say("/users                Lista usuarios");
         say("/help                 Muestra ayuda");
@@ -414,11 +514,20 @@ public class ClientMain {
         }
     }
 
-    private static void logoutQuietly(ChatRoomPrx chatPrx, PrivateChatPrx privatePrx, String nick) {
+    private static void logoutQuietly(ChatRoomPrx chatPrx, PrivateChatPrx privatePrx,
+                                      CallServicePrx callPrx, CallManager callManager, String nick) {
 
         if (!loggedOut.compareAndSet(false, true)) {
             return;
         }
+
+        // Primero voz: el servidor cuelga las llamadas y avisa a los demas participantes
+        try {
+            callPrx.logout(nick);
+        } catch (Exception ignored) {
+        }
+
+        callManager.shutdown();
 
         try {
             chatPrx.logout(nick);
