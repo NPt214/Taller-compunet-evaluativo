@@ -15,7 +15,8 @@ task compileSlice(type: Exec) {
             '--output-dir',
             'src/main/java',
             'src/main/slice/chatroom/Chat.ice',
-            'src/main/slice/privatechat/PrivateChat.ice'
+            'src/main/slice/privatechat/PrivateChat.ice',
+            'src/main/slice/call/Call.ice'
 }
 
 // Asegura que Java dependa de la generacion previa del codigo de Slice
