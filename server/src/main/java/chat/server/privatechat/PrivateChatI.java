@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PrivateChatI implements PrivateChat {
@@ -35,6 +36,14 @@ public class PrivateChatI implements PrivateChat {
     private final Set<String> knownUsers = ConcurrentHashMap.newKeySet();
     private final AtomicLong idCounter = new AtomicLong(0);
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // Gancho (nickname) que se dispara cuando una sesion termina (logout o conexion perdida).
+    // Lo usa el servicio de llamadas: las sesiones de un cliente comparten la misma conexion.
+    private volatile Consumer<String> onSessionEnded;
+
+    public void setOnSessionEnded(Consumer<String> listener) {
+        this.onSessionEnded = listener;
+    }
 
     @Override
     public void login(String nickname, PrivateCallbackPrx callback, Current current)
@@ -185,6 +194,10 @@ public class PrivateChatI implements PrivateChat {
         }
         log("Usuario desconectado: " + nick + " [" + reason + "] (en linea: "
                 + sessions.size() + ")");
+        Consumer<String> l = onSessionEnded;
+        if (l != null) {
+            l.accept(nick);
+        }
     }
 
     private <T> CompletableFuture<T> notifyClient(
@@ -212,3 +225,4 @@ public class PrivateChatI implements PrivateChat {
         System.out.println("[" + now() + "] [PRIVATE-SERVER] " + text);
     }
 }
+
