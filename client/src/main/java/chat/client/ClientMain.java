@@ -32,23 +32,16 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Cliente unico: CHATROOM (Chat.ice) + 1 A 1 (PrivateChat.ice) en la misma terminal.
- *
- * Un solo nickname se registra en los dos servicios del servidor:
- *   - ChatService         -> interfaz ChatRoom    (salas, polling con getPendingMessages)
- *   - PrivateChatService  -> interfaz PrivateChat (mensajes privados por callback)
- */
+
 public class ClientMain {
 
     private static final int SESSION_TIMEOUT_SECONDS = 10;
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    // ---------------------------------------------------------------- estado
+
     private static volatile boolean running = true;
     private static volatile long lastReceivedId = 0;
 
-    // Salida de consola compartida entre el hilo principal, el polling y los callbacks
     private static final Object OUT = new Object();
     private static volatile boolean promptVisible = false;
     private static volatile String currentPrompt = "> ";
@@ -64,7 +57,6 @@ public class ClientMain {
             String host = rest.size() > 0 ? rest.get(0) : "127.0.0.1";
             String port = rest.size() > 1 ? rest.get(1) : "10000";
 
-            // ===================== PROXIES DE LOS DOS SERVICIOS =====================
             ChatRoomPrx chatPrx = ChatRoomPrx.checkedCast(
                     communicator.stringToProxy("ChatService:default -h " + host + " -p " + port));
             PrivateChatPrx privatePrx = PrivateChatPrx.checkedCast(
@@ -78,8 +70,6 @@ public class ClientMain {
                 return;
             }
 
-            // ===================== 1 A 1: ADAPTADOR DE CALLBACK =====================
-            // El servidor entrega los mensajes privados invocando este objeto
             String endpoints = communicator.getProperties()
                     .getPropertyWithDefault("CallbackAdapter.Endpoints", "default");
             ObjectAdapter callbackAdapter =
@@ -88,8 +78,6 @@ public class ClientMain {
                     callbackAdapter.add(new PrivateCallbackI(),
                             new Identity(UUID.randomUUID().toString(), "client")));
 
-            // ===================== VOZ: CALLBACKS DE LLAMADAS (Call.ice) =====================
-            // Mismo adaptador, otro servant: el servidor notifica llamadas entrantes, etc.
             CallManager callManager = new CallManager(callPrx, host, ClientMain::say, ClientMain::event);
             CallCallbackPrx callCallbackPrx = CallCallbackPrx.uncheckedCast(
                     callbackAdapter.add(new CallCallbackI(callManager),
@@ -102,7 +90,6 @@ public class ClientMain {
 
             say("=== CHAT DISTRIBUIDO ZEROC ICE (chatroom + 1 a 1) ===");
 
-            // ===================== LOGIN (en los dos servicios) =====================
             while (true) {
 
                 String line = readLine(scanner, "Ingrese su nickname: ");
@@ -123,7 +110,6 @@ public class ClientMain {
                     try {
                         privatePrx.login(nickname, callbackPrx);
                     } catch (PrivateChatException e) {
-                        // Si falla el segundo servicio, se deshace el primero
                         try {
                             chatPrx.logout(nickname);
                         } catch (Exception ignored) {
@@ -134,7 +120,6 @@ public class ClientMain {
                     try {
                         callPrx.login(nickname, callCallbackPrx);
                     } catch (CallException e) {
-                        // Si falla el tercer servicio, se deshacen los dos anteriores
                         try {
                             privatePrx.logout(nickname);
                         } catch (Exception ignored) {
@@ -163,11 +148,10 @@ public class ClientMain {
 
             keepConnectionAlive(privatePrx);
 
-            // Si se cierra la terminal con Ctrl+C tambien se libera el nickname
             Runtime.getRuntime().addShutdownHook(
                     new Thread(() -> logoutQuietly(chatPrx, privatePrx, callPrx, callManager, activeUser)));
 
-            // ===================== CHATROOM: HILO DE POLLING =====================
+
             Thread listenerThread = new Thread(() -> {
 
                 while (running) {
@@ -203,7 +187,7 @@ public class ClientMain {
 
             printHelp();
 
-            // ===================== BUCLE DE COMANDOS =====================
+
             while (running) {
 
                 String input = readLine(scanner, "> ");
@@ -330,7 +314,6 @@ public class ClientMain {
                             break;
                         }
 
-                        // --------------------------- 1 A 1 ---------------------------
 
                         case "/msg": {
 
@@ -351,7 +334,6 @@ public class ClientMain {
                             break;
                         }
 
-                        // ----------------------- LLAMADAS DE VOZ (UDP) -----------------------
 
                         case "/call": {
 
@@ -452,9 +434,6 @@ public class ClientMain {
         }
     }
 
-    // ============================================================================
-    // 1 A 1: objeto que el servidor invoca para entregar mensajes privados
-    // ============================================================================
     private static class PrivateCallbackI implements PrivateCallback {
 
         @Override
@@ -470,9 +449,6 @@ public class ClientMain {
         }
     }
 
-    // ============================================================================
-    // Utilidades
-    // ============================================================================
 
     private static void printHelp() {
 
@@ -502,7 +478,6 @@ public class ClientMain {
         say("");
     }
 
-    // Heartbeat: el servidor cierra las conexiones inactivas durante 10 s
     private static void keepConnectionAlive(PrivateChatPrx privatePrx) {
         try {
             privatePrx.ice_getConnection().setACM(
@@ -521,7 +496,6 @@ public class ClientMain {
             return;
         }
 
-        // Primero voz: el servidor cuelga las llamadas y avisa a los demas participantes
         try {
             callPrx.logout(nick);
         } catch (Exception ignored) {
@@ -552,7 +526,6 @@ public class ClientMain {
         }
     }
 
-    // Mensaje asincrono (polling o callback): no pisa lo que el usuario esta escribiendo
     private static void event(String text) {
         synchronized (OUT) {
             System.out.println();
@@ -564,7 +537,7 @@ public class ClientMain {
         }
     }
 
-    // Lee una linea mostrando el prompt; devuelve null si se cierra la entrada
+
     private static String readLine(Scanner scanner, String prompt) {
         synchronized (OUT) {
             currentPrompt = prompt;

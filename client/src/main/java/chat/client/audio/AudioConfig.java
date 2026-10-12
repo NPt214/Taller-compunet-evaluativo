@@ -2,7 +2,7 @@ package chat.client.audio;
 
 import javax.sound.sampled.AudioFormat;
 
-/** Parametros de audio compartidos por captura, red y reproduccion. */
+
 public final class AudioConfig {
 
     public static final float SAMPLE_RATE = 16000f;   // 16 kHz: voz clara con poco ancho de banda
@@ -17,7 +17,7 @@ public final class AudioConfig {
     private AudioConfig() {
     }
 
-    /** PCM firmado, little-endian. */
+
     public static AudioFormat format() {
         return new AudioFormat(SAMPLE_RATE, SAMPLE_BITS, CHANNELS, true, false);
     }

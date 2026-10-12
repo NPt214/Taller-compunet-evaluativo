@@ -9,15 +9,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Reproduccion con mezcla. Cada emisor tiene su propia cola (mini jitter buffer) y
- * un unico hilo suma las tramas de todos los emisores activos y las escribe en UN
- * solo SourceDataLine. Escribir cada flujo directo al parlante mezcla bytes de forma
- * incoherente (audio ininteligible) en cuanto hay mas de un hablante.
- *
- * El write() bloqueante del SourceDataLine actua de reloj: el hilo escribe una trama
- * (o silencio) cada 20 ms de forma natural.
- */
 public final class AudioMixer implements Runnable, AutoCloseable {
 
     private static final int PREBUFFER_FRAMES = 2;     // 40 ms antes de empezar a reproducir un emisor

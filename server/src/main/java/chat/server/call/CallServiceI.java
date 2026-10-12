@@ -25,18 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-/**
- * Señalizacion de llamadas de voz sobre Ice (RF-05 y RF-06).
- *
- * Este servicio NUNCA transporta audio: solo negocia quien llama a quien, los
- * endpoints UDP y la pertenencia a las llamadas grupales. El audio va por UDP
- * (directo entre clientes en 1 a 1, o a traves de UdpAudioRelay en grupal).
- *
- * Thread-safety: el estado vive en ConcurrentHashMap y las transiciones que
- * tocan varias colecciones a la vez (reservar usuarios, unirse a un grupo) se
- * hacen dentro de synchronized(lock). Las notificaciones a clientes son
- * asincronas y se envian SIEMPRE fuera del lock.
- */
+
 public class CallServiceI implements CallService {
 
     private static final int CALLBACK_TIMEOUT_MS = 5000;
@@ -67,7 +56,6 @@ public class CallServiceI implements CallService {
         this.relay = relay;
     }
 
-    // ===================================================================== sesion
 
     @Override
     public void login(String nickname, CallCallbackPrx callback, Current current)
@@ -113,11 +101,7 @@ public class CallServiceI implements CallService {
         }
     }
 
-    /**
-     * Gancho llamado por PrivateChatI cuando una sesion termina (logout o caida de la
-     * conexion). Las tres sesiones de un cliente comparten conexion, asi que si la
-     * privada cae, tambien debe caer la de voz y colgarse sus llamadas.
-     */
+
     public void onUserGone(String nickname) {
         CallSession s = sessions.get(nickname);
         if (s != null) {
@@ -125,7 +109,6 @@ public class CallServiceI implements CallService {
         }
     }
 
-    /** Gancho llamado por ChatRoomI cuando alguien sale de una sala (o hace logout). */
     public void onRoomLeft(String room, String nickname) {
         if (room.equals(userGroup.get(nickname))) {
             removeFromGroup(nickname, room, true);
@@ -148,7 +131,6 @@ public class CallServiceI implements CallService {
         log("Sesion de voz terminada: " + nick + " [" + reason + "] (en linea: " + sessions.size() + ")");
     }
 
-    // ============================================================ RF-05: 1 a 1
 
     @Override
     public String startCall(String caller, String callee, Endpoint myUdp, Current current)
@@ -275,7 +257,6 @@ public class CallServiceI implements CallService {
         }
     }
 
-    /** Elimina la llamada y avisa a quien no la termino (si by="servidor", a ambos). */
     private void endCall(String callId, String by, String reason) {
         ActiveCall c;
         synchronized (lock) {
@@ -303,7 +284,6 @@ public class CallServiceI implements CallService {
         userCall.remove(c.callee, c.id);
     }
 
-    // ======================================================== RF-06: grupal
 
     @Override
     public String[] joinGroupCall(String nickname, String room, Current current)
@@ -359,10 +339,7 @@ public class CallServiceI implements CallService {
         }
     }
 
-    /**
-     * Saca al usuario de la llamada grupal. includeSelf=true cuando la salida es forzada
-     * (p. ej. abandono la sala): asi su cliente tambien cierra el audio local.
-     */
+
     private void removeFromGroup(String nick, String room, boolean includeSelf) {
         boolean removed;
         synchronized (lock) {
@@ -382,8 +359,7 @@ public class CallServiceI implements CallService {
         }
     }
 
-    /** Avisa a los miembros de la sala y a los participantes de la llamada. */
-    private void broadcastGroupEvent(String room, String who, boolean joined, boolean includeSelf) {
+   private void broadcastGroupEvent(String room, String who, boolean joined, boolean includeSelf) {
         Set<String> recipients = new HashSet<>(chat.membersOf(room));
         GroupCall g = groups.get(room);
         if (g != null) {
@@ -407,7 +383,6 @@ public class CallServiceI implements CallService {
         return relay.getPort();
     }
 
-    // ================================================================ utilidades
 
     private boolean isBusy(String nick) { // se invoca con lock tomado
         return userCall.containsKey(nick) || userGroup.containsKey(nick);

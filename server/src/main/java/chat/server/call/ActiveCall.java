@@ -1,6 +1,6 @@
 package chat.server.call;
 
-/** Estado de una llamada 1 a 1 en el servidor. */
+
 public final class ActiveCall {
 
     public enum State { RINGING, ACTIVE }

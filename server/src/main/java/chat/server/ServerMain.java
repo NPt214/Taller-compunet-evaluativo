@@ -28,23 +28,21 @@ public class ServerMain {
                             "default -p 10000"
                     );
 
-            // --- CHATROOM (Chat.ice) ---
+
             ChatRoomI chatRoom = new ChatRoomI();
             adapter.add(chatRoom, Util.stringToIdentity("ChatService"));
 
-            // --- 1 A 1 (PrivateChat.ice) ---
+
             PrivateChatI privateChat = new PrivateChatI();
             adapter.add(privateChat, Util.stringToIdentity("PrivateChatService"));
 
-            // --- LLAMADAS DE VOZ (Call.ice): señalizacion por Ice + relay de audio UDP ---
             int relayPort = communicator.getProperties()
                     .getPropertyAsIntWithDefault("CallRelay.Port", 10001);
             UdpAudioRelay relay = new UdpAudioRelay(relayPort);
             relay.start();
             CallServiceI callService = new CallServiceI(chatRoom, relay);
             adapter.add(callService, Util.stringToIdentity("CallService"));
-
-            // Ganchos: salir de una sala o perder la sesion cuelga las llamadas del usuario
+            
             chatRoom.setOnMemberLeft(callService::onRoomLeft);
             privateChat.setOnSessionEnded(callService::onUserGone);
 

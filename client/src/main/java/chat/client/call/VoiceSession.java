@@ -19,17 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/**
- * Sesion de voz sobre UDP: un DatagramSocket, un hilo de captura (microfono -> UDP),
- * un hilo de recepcion (UDP -> mezclador -> parlantes).
- *
- * Dos modos:
- *  - directo (1 a 1): se envia al endpoint del otro cliente y solo se acepta su audio.
- *  - relay (grupal): se envia al relay del servidor, que lo reenvia al resto de la sala.
- *
- * Ciclo: open() crea y enlaza el socket (para poder publicar el puerto por Ice antes de
- * conocer al otro extremo) -> start() arranca audio -> close() lo libera todo.
- */
+
 public final class VoiceSession implements AutoCloseable {
 
     private final String nick;
@@ -65,12 +55,7 @@ public final class VoiceSession implements AutoCloseable {
     public int getLocalPort() {
         return socket.getLocalPort();
     }
-
-    /**
-     * IP local desde la que se alcanza al servidor. "Conectar" un socket UDP no envia
-     * nada: solo hace que el SO elija la interfaz de salida (mejor que getLocalHost()).
-     */
-    public static String localAddressToward(String serverHost) {
+     public static String localAddressToward(String serverHost) {
         try (DatagramSocket probe = new DatagramSocket()) {
             probe.connect(InetAddress.getByName(serverHost), 9);
             InetAddress a = probe.getLocalAddress();
@@ -86,8 +71,7 @@ public final class VoiceSession implements AutoCloseable {
         return new InetSocketAddress(InetAddress.getByName(host), port);
     }
 
-    /** Arranca parlantes, receptor y microfono. Si falla el audio de salida lanza excepcion. */
-    public synchronized void start(InetSocketAddress target, boolean relayMode, String expectedPeer)
+     public synchronized void start(InetSocketAddress target, boolean relayMode, String expectedPeer)
             throws LineUnavailableException {
 
         this.target = target;
@@ -131,7 +115,7 @@ public final class VoiceSession implements AutoCloseable {
         return muted;
     }
 
-    // ------------------------------------------------------------------ envio
+
 
     private void sendHello() {
         send(new AudioPacket(AudioPacket.HELLO, 0, room, nick, null));
@@ -153,7 +137,7 @@ public final class VoiceSession implements AutoCloseable {
         }
     }
 
-    // -------------------------------------------------------------- recepcion
+
 
     private void receiveLoop() {
         byte[] buf = new byte[AudioPacket.MAX_DATAGRAM];
@@ -186,7 +170,7 @@ public final class VoiceSession implements AutoCloseable {
         }
     }
 
-    /** Descarta duplicados/tardios recientes; un salto grande se toma como reinicio del emisor. */
+
     private boolean acceptSeq(String sender, int seq) {
         Integer last = lastSeq.get(sender);
         if (last != null) {

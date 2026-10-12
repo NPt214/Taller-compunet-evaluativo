@@ -10,16 +10,7 @@ import java.net.SocketException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Relay centralizado de audio (SFU ligero) para las llamadas grupales (RF-06, opcion a).
- *
- * Un unico socket UDP recibe las tramas de cada emisor y las reenvia, sin tocarlas,
- * a todos los demas participantes de la misma sala. Nunca reenvia al emisor.
- *
- * Autorizacion: solo participan los (sala, nick) que CallServiceI registro con allow()
- * tras validar la membresia por Ice. La direccion UDP de cada participante se aprende
- * del origen de su primer HELLO/AUDIO (funciona aunque haya NAT).
- */
+
 public final class UdpAudioRelay implements AutoCloseable {
 
     private static final class Member {
@@ -48,7 +39,7 @@ public final class UdpAudioRelay implements AutoCloseable {
         return socket != null ? socket.getLocalPort() : port;
     }
 
-    /** Autoriza a un usuario a emitir/recibir audio de una sala. */
+
     public void allow(String room, String nick) {
         rooms.compute(room, (k, m) -> {
             if (m == null) {
@@ -59,7 +50,6 @@ public final class UdpAudioRelay implements AutoCloseable {
         });
     }
 
-    /** Quita al usuario; si la sala queda vacia se elimina. */
     public void remove(String room, String nick) {
         rooms.computeIfPresent(room, (k, m) -> {
             m.remove(nick);

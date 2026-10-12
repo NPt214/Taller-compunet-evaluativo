@@ -7,33 +7,26 @@ import CallApp.Endpoint;
 import java.net.SocketException;
 import java.util.function.Consumer;
 
-/**
- * Estado de las llamadas de voz del cliente (RF-05 y RF-06) y puente entre
- * la señalizacion Ice (CallServicePrx / CallCallbackI) y el audio UDP (VoiceSession).
- *
- * Un cliente participa como maximo en UNA cosa a la vez: una llamada 1 a 1 o una
- * llamada grupal. Los metodos son synchronized porque los invocan tanto el hilo de la
- * consola (comandos) como los hilos de Ice (callbacks del servidor).
- */
+
 public final class CallManager {
 
     private enum State { IDLE, CALLING, RINGING_IN, ACTIVE }
 
     private final CallServicePrx svc;
     private final String serverHost;
-    private final Consumer<String> say;    // respuesta a un comando del usuario
-    private final Consumer<String> event;  // evento asincrono (no pisa lo que se esta escribiendo)
+    private final Consumer<String> say;
+    private final Consumer<String> event;
 
     private volatile String nickname;
 
-    // ---- llamada 1 a 1 ----
+
     private State state = State.IDLE;
     private String callId;
     private String peer;
-    private Endpoint peerEndpoint;   // endpoint UDP del otro (llamada entrante)
+    private Endpoint peerEndpoint;
     private VoiceSession voice;
 
-    // ---- llamada grupal ----
+
     private String groupRoom;
     private VoiceSession groupVoice;
 
@@ -49,9 +42,6 @@ public final class CallManager {
         this.nickname = nickname;
     }
 
-    // ====================================================== comandos del usuario
-
-    /** /call <nick> */
     public synchronized void call(String target) throws CallException {
         if (state != State.IDLE || groupVoice != null) {
             say.accept("Ya estas en una llamada. Usa /hangup o /gleave primero.");
@@ -75,7 +65,7 @@ public final class CallManager {
         say.accept("Llamando a " + target + "... (esperando respuesta; /hangup para cancelar)");
     }
 
-    /** /accept */
+
     public synchronized void accept() throws CallException {
         if (state != State.RINGING_IN) {
             say.accept("No tienes ninguna llamada entrante.");
@@ -106,7 +96,7 @@ public final class CallManager {
         say.accept("Llamada establecida con " + peer + ". /mute para silenciar, /hangup para colgar.");
     }
 
-    /** /reject */
+
     public synchronized void reject() throws CallException {
         if (state != State.RINGING_IN) {
             say.accept("No tienes ninguna llamada entrante.");
@@ -120,7 +110,7 @@ public final class CallManager {
         say.accept("Llamada rechazada.");
     }
 
-    /** /hangup (tambien cancela una llamada que aun esta timbrando) */
+
     public synchronized void hangup() {
         if (state == State.IDLE) {
             say.accept("No hay ninguna llamada 1 a 1 activa.");
@@ -132,7 +122,7 @@ public final class CallManager {
         say.accept("Llamada finalizada.");
     }
 
-    /** /gcall <sala> : inicia o se une a la llamada de voz de una sala */
+
     public synchronized void joinGroup(String room) throws CallException {
         if (state != State.IDLE) {
             say.accept("Estas en una llamada 1 a 1. Usa /hangup primero.");
@@ -167,7 +157,7 @@ public final class CallManager {
                 + ". /mute para silenciar, /gleave para salir.");
     }
 
-    /** /gleave */
+
     public synchronized void leaveGroup() {
         if (groupVoice == null) {
             say.accept("No estas en ninguna llamada grupal.");
@@ -179,7 +169,7 @@ public final class CallManager {
         say.accept("Saliste de la llamada de la sala '" + room + "'.");
     }
 
-    /** /mute (alterna silenciar/activar microfono en la llamada actual) */
+
     public synchronized void toggleMute() {
         VoiceSession v = groupVoice != null ? groupVoice : (state == State.ACTIVE ? voice : null);
         if (v == null) {
@@ -198,7 +188,6 @@ public final class CallManager {
         resetCall();
     }
 
-    // ================================================ callbacks del servidor (Ice)
 
     public synchronized void onIncomingCall(String id, String caller, Endpoint callerUdp) {
         if (state != State.IDLE || groupVoice != null) {
@@ -251,7 +240,6 @@ public final class CallManager {
         boolean me = who.equals(nickname);
         if (me) {
             if (!joined && groupVoice != null && room.equals(groupRoom)) {
-                // el servidor nos saco (abandonamos la sala): cerrar el audio local
                 closeGroup();
                 event.accept("[LLAMADA] Saliste de la llamada de la sala '" + room + "'.");
             }
@@ -263,7 +251,6 @@ public final class CallManager {
                 + (joined ? " se unio a la llamada de voz." : " salio de la llamada de voz.") + hint);
     }
 
-    // ===================================================================== utiles
 
     private VoiceSession openSession(String room) {
         try {

@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Participantes de la llamada grupal de una sala. */
+
 public final class GroupCall {
 
     private final String room;

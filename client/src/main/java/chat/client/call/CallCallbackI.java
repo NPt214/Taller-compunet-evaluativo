@@ -4,10 +4,7 @@ import CallApp.CallCallback;
 import CallApp.Endpoint;
 import com.zeroc.Ice.Current;
 
-/**
- * Objeto Ice que el cliente expone en su adaptador de callbacks para que el servidor
- * le notifique eventos de llamadas. Solo delega en CallManager.
- */
+
 public class CallCallbackI implements CallCallback {
 
     private final CallManager manager;

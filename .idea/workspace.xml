@@ -5,96 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9a7103be-b5b1-4c9e-9f21-675d7fef167d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/checksums/checksums.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/checksums/md5-checksums.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/checksums/sha1-checksums.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/executionHistory/executionHistory.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/executionHistory/executionHistory.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileChanges/last-build.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/resourceHashesCache.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/gc.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/vcs-1/gc.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Taller-compunet-evaluativo.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/client/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/classes/java/main/chat/client/ClientCallbackI.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/classes/java/main/chat/client/ClientMain.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/classes/java/main/chat/client/Console.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/tmp/compileJava/compileTransaction/stash-dir/ClientCallbackI.class.uniqueId1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/tmp/compileJava/compileTransaction/stash-dir/ClientMain.class.uniqueId0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/tmp/compileJava/compileTransaction/stash-dir/Console.class.uniqueId2" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/ClientCallbackI.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ChatException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ChatMessage.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ChatRoom$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ChatRoom.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ChatRoomPrx.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ClientCallback$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ClientCallback.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/ClientCallbackPrx.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/DeliveryReceipt.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/MessageSeqHelper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/NicknameInUseException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/NotRoomMemberException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/PrivateMessage.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/RoomAlreadyExistsException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/RoomInfo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/RoomMessage.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/RoomNotFoundException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/RoomSeqHelper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/UserNotFoundException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/UserOfflineException.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/_ChatRoomPrxI.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/classes/java/main/ChatApp/_ClientCallbackPrxI.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/libs/common.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ChatRoom$1.class.uniqueId7" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ChatRoom.class.uniqueId6" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ChatRoomPrx.class.uniqueId2" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ClientCallback$1.class.uniqueId5" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ClientCallback.class.uniqueId3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/ClientCallbackPrx.class.uniqueId4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/_ChatRoomPrxI.class.uniqueId1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/compileTransaction/stash-dir/_ClientCallbackPrxI.class.uniqueId0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build/tmp/jar/MANIFEST.MF" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/DeliveryReceipt.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/DeliveryReceipt.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/NicknameInUseException.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/NicknameInUseException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateCallback.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateCallback.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateCallbackPrx.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateCallbackPrx.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChat.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChat.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChatException.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChatException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChatPrx.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateChatPrx.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/PrivateMessage.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/UserNotFoundException.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/UserNotFoundException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/UserOfflineException.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/UserOfflineException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/_PrivateCallbackPrxI.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/_PrivateCallbackPrxI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/_PrivateChatPrxI.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/PrivateChatApp/_PrivateChatPrxI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/slice/call/Call.ice" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/slice/call/Call.ice" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/classes/java/main/chat/server/ChatRoomI.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/classes/java/main/chat/server/ClientSession.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/classes/java/main/chat/server/Room.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/classes/java/main/chat/server/ServerMain.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/tmp/compileJava/compileTransaction/stash-dir/ChatRoomI.class.uniqueId2" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/tmp/compileJava/compileTransaction/stash-dir/ClientSession.class.uniqueId0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/tmp/compileJava/compileTransaction/stash-dir/ServerMain.class.uniqueId1" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/ChatRoomI.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/ClientSession.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/Room.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/9.0.0/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/ClientMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/ClientMain.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioCapture.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioCapture.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioMixer.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/audio/AudioMixer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/call/CallCallbackI.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/call/CallCallbackI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/call/CallManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/call/CallManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/main/java/chat/client/call/VoiceSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/chat/client/call/VoiceSession.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/chat/common/audio/AudioPacket.java" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/chat/common/audio/AudioPacket.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/ServerMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/ServerMain.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/call/ActiveCall.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/call/ActiveCall.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/call/CallServiceI.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/call/CallServiceI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/call/GroupCall.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/call/GroupCall.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/call/UdpAudioRelay.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/call/UdpAudioRelay.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/chat/server/chatroom/ChatRoomI.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/chat/server/chatroom/ChatRoomI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,12 +41,7 @@
         </task>
         <projects_view>
           <tree_state>
-            <expand>
-              <path>
-                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="TallerV2" type="f1a62948:ProjectNode" />
-              </path>
-            </expand>
+            <expand />
             <select />
           </tree_state>
         </projects_view>
@@ -158,7 +80,7 @@
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Juan Borrero/Documents/compunet/Taller-compunet-evaluativo",
+    "last_opened_file_path": "C:/Users/usuario/Desktop/Semestre V/Taller-compunet-evaluativo",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -207,11 +129,8 @@
       </ExternalSystemSettings>
       <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
       <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
       <DebugAllEnabled>false</DebugAllEnabled>
       <RunAsTest>false</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
     <configuration name="Taller-compunet-evaluativo [dependencies]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
@@ -232,11 +151,8 @@
       </ExternalSystemSettings>
       <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
       <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
       <DebugAllEnabled>false</DebugAllEnabled>
       <RunAsTest>false</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
     <configuration name="Taller-compunet-evaluativo [runServer]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
@@ -257,11 +173,8 @@
       </ExternalSystemSettings>
       <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
       <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
       <DebugAllEnabled>false</DebugAllEnabled>
       <RunAsTest>false</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
     <recent_temporary>
@@ -272,14 +185,6 @@
         <item itemvalue="Application.ClientMain" />
       </list>
     </recent_temporary>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.101" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.101" />
-      </set>
-    </attachedChunks>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">

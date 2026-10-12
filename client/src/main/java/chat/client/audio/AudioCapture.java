@@ -6,11 +6,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 import java.util.function.Consumer;
 
-/**
- * Captura de microfono (javax.sound.sampled) en un hilo propio.
- * Entrega tramas PCM de exactamente FRAME_BYTES al sink. Mientras esta silenciado
- * sigue leyendo del microfono (para no acumular buffer) pero no entrega nada.
- */
+
 public final class AudioCapture implements Runnable, AutoCloseable {
 
     private final TargetDataLine line;

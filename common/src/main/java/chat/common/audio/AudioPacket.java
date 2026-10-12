@@ -4,24 +4,12 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Formato del datagrama UDP de voz (compartido por clientes y relay del servidor).
- *
- * <pre>
- * +------+---------+-----------+------+-----------+------+----------+
- * | type | seq (4) | roomLen(1)| room | senderLen | sndr | payload  |
- * +------+---------+-----------+------+-----------+------+----------+
- * </pre>
- *
- * type: HELLO (registro/keep-alive hacia el relay) o AUDIO (una trama PCM).
- * En llamadas 1 a 1 room va vacio.
- */
+
 public final class AudioPacket {
 
     public static final byte HELLO = 1;
     public static final byte AUDIO = 2;
 
-    /** Tamano maximo de datagrama que se acepta (una trama de 20 ms ocupa ~700 bytes). */
     public static final int MAX_DATAGRAM = 2048;
 
     public final byte type;
@@ -53,7 +41,7 @@ public final class AudioPacket {
         return b.array();
     }
 
-    /** Devuelve null si el datagrama esta mal formado (se descarta en silencio). */
+
     public static AudioPacket decode(byte[] data, int off, int len) {
         try {
             ByteBuffer b = ByteBuffer.wrap(data, off, len);

@@ -23,21 +23,19 @@ public class ChatRoomI implements ChatRoom {
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    // Gancho (room, nickname) que se dispara cuando alguien sale de una sala; lo usa el
-    // servicio de llamadas para sacar al usuario de la llamada grupal de esa sala.
+
     private volatile BiConsumer<String, String> onMemberLeft;
 
     public void setOnMemberLeft(BiConsumer<String, String> listener) {
         this.onMemberLeft = listener;
     }
 
-    /** true si el usuario pertenece actualmente a la sala (sin bloqueos). */
+
     public boolean isMember(String room, String nickname) {
         Set<String> members = rooms.get(room);
         return members != null && members.contains(nickname);
     }
 
-    /** Copia de los miembros actuales de una sala (vacia si no existe). */
     public Set<String> membersOf(String room) {
         Set<String> members = rooms.get(room);
         return members == null ? new java.util.HashSet<>() : new java.util.HashSet<>(members);
