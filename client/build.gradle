@@ -1,15 +1,30 @@
-plugins {
-    id 'application'
+allprojects {
+    repositories {
+        mavenCentral ()
+    }
 }
 
-dependencies {
-    implementation project(':common')
+subprojects {
+    apply plugin : 'java'
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    dependencies {
+        implementation 'com.zeroc:ice:3.7.10'
+    }
 }
 
-application {
-    mainClass = 'chat.client.ClientMain'
+// Atajos exigidos por el enunciado: ./gradlew runServer  y  ./gradlew runClient
+// (para el cliente use --console=plain para que la entrada por teclado funcione bien)
+tasks.register('runServer') {
+    group = 'application'
+    description = 'Inicia el servidor Ice (chatroom, 1 a 1, voz) y el relay UDP'
+    dependsOn ':server:run'
 }
 
-run {
-    standardInput = System.in
+tasks.register('runClient') {
+    group = 'application'
+    description = 'Inicia un cliente interactivo (CLI)'
+    dependsOn ':client:run'
 }
