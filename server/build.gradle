@@ -2,6 +2,7 @@ plugins {
     id 'application'
 }
 dependencies {
+// Vincula las clases generadas por Slice desde el modulo common
     implementation project (':common')
 }
 application {

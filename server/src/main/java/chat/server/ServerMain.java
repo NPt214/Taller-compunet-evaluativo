@@ -1,5 +1,7 @@
 package chat.server;
 
+import chat.server.chatroom.ChatRoomI;
+import chat.server.privatechat.PrivateChatI;
 import com.zeroc.Ice.Communicator;
 import com.zeroc.Ice.InitializationData;
 import com.zeroc.Ice.ObjectAdapter;
@@ -17,32 +19,33 @@ public class ServerMain {
 
         try (Communicator communicator = Util.initialize(args, initData)) {
 
+            // Un solo adaptador en el puerto 10000 con dos servicios independientes
             ObjectAdapter adapter =
                     communicator.createObjectAdapterWithEndpoints(
                             "ChatAdapter",
                             "default -p 10000"
                     );
 
-            ChatRoomI servant = new ChatRoomI();
+            // --- CHATROOM (Chat.ice) ---
+            adapter.add(new ChatRoomI(), Util.stringToIdentity("ChatService"));
 
-            adapter.add(servant, Util.stringToIdentity("ChatService"));
+            // --- 1 A 1 (PrivateChat.ice) ---
+            adapter.add(new PrivateChatI(), Util.stringToIdentity("PrivateChatService"));
 
             adapter.activate();
 
             System.out.println("=================================================");
             System.out.println("SERVIDOR ZEROC ICE INICIADO EXITOSAMENTE");
             System.out.println("Puerto TCP: 10000 | Endpoint: default -p 10000");
-            System.out.println("Identidad del Servicio: ChatService");
+            System.out.println("Servicio chatroom : ChatService");
+            System.out.println("Servicio 1 a 1    : PrivateChatService");
             System.out.println("=================================================");
             System.out.println("Esperando llamadas remotas de clientes...");
 
             communicator.waitForShutdown();
 
         } catch (Exception e) {
-            System.err.println(
-                    "[ERROR SERVIDOR] Fallo critico: " + e.getMessage()
-            );
-
+            System.err.println("[ERROR SERVIDOR] Fallo critico: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
         }

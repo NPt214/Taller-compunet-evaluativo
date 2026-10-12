@@ -1,15 +1,15 @@
 package chat.server;
 
-import ChatApp.ChatException;
-import ChatApp.ChatMessage;
-import ChatApp.ChatRoom;
+import ChatApp.chatroom.ChatException;
+import ChatApp.chatroom.ChatMessage;
+import ChatApp.chatroom.ChatRoom;
 import ChatApp.ClientCallbackPrx;
 import ChatApp.DeliveryReceipt;
 import ChatApp.NicknameInUseException;
 import ChatApp.NotRoomMemberException;
 import ChatApp.PrivateMessage;
 import ChatApp.RoomAlreadyExistsException;
-import ChatApp.RoomInfo;
+import ChatApp.chatroom.RoomInfo;
 import ChatApp.RoomMessage;
 import ChatApp.RoomNotFoundException;
 import ChatApp.UserNotFoundException;
