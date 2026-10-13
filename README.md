@@ -25,20 +25,6 @@ Se mantiene la estructura `common / server / client`. `common` y `server` tienen
 `PrivateChat.ice` es independiente (no hace `#include` de `Chat.ice`) y define solo lo que necesita el 1 a 1:
 `PrivateMessage`, `DeliveryReceipt`, `PrivateChatException` (+ `NicknameInUseException`, `UserNotFoundException`, `UserOfflineException`), `PrivateCallback` y la interfaz `PrivateChat` (`login`, `logout`, `getOnlineUsers`, `sendPrivateMessage`).
 
-## Transferencia de archivos (RF-04)
-
-- Contrato: dentro de `Chat.ice` (modulo `ChatApp`). Se agregaron `ByteSeq`, el struct `FileInfo`, el callback `FileCallback` y seis operaciones en `ChatRoom`. No hay excepciones nuevas: todo usa `ChatException`, y los demas errores (ruta invalida, archivo inexistente, red) se manejan en `ClientMain`.
-- Servidor: `ChatRoomI` delega las operaciones a `chat/server/chatroom/FileTransfer.java`.
-- Funciona por sesiones:
-  1. Despues del login, el cliente registra su callback con `registerFileCallback`.
-  2. El emisor llama `startUpload(FileInfo)` con los metadatos (nombre, tamano total, tamano de fragmento, total de fragmentos y SHA-256) y recibe un id de subida.
-  3. Envia los fragmentos de 64 KB en orden con `writeChunk(id, indice, bytes)` y termina con `closeUpload(id)`.
-  4. El servidor guarda el archivo en una carpeta temporal, verifica tamano y SHA-256 y avisa a los destinatarios con `onFileAvailable` (al usuario, o a los miembros de la sala menos el emisor).
-  5. Cada receptor descarga con `readChunk(...)` en un hilo aparte, verifica el SHA-256, lo guarda en `descargas/<nickname>/` y llama `closeDownload`. Cuando todos terminan, el servidor borra el temporal.
-- Como el archivo se sube una sola vez, en una sala cada miembro lo descarga a su ritmo y un cliente lento no frena al emisor.
-- `ClientMain` valida la ruta antes de enviar (que exista, que no sea carpeta, permisos, maximo 200 MB) y el envio corre en un hilo aparte para no bloquear la consola.
-- Rutas con espacios: escribirlas entre comillas, por ejemplo `/sendfile ana "C:/mis fotos/foto.png"`.
-
 ## Generacion de stubs
 
 `compileSlice` (en `common/build.gradle`) genera con `slice2java` los archivos `chatroom/Chat.ice`, `privatechat/PrivateChat.ice` y `call/Call.ice`.
