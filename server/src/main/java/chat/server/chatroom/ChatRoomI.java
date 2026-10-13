@@ -3,6 +3,8 @@ package chat.server.chatroom;
 import ChatApp.ChatException;
 import ChatApp.ChatMessage;
 import ChatApp.ChatRoom;
+import ChatApp.FileCallbackPrx;
+import ChatApp.FileInfo;
 import com.zeroc.Ice.Current;
 
 import java.time.LocalTime;
@@ -25,6 +27,8 @@ public class ChatRoomI implements ChatRoom {
 
 
     private volatile BiConsumer<String, String> onMemberLeft;
+
+    private final FileTransfer files = new FileTransfer(this);
 
     public void setOnMemberLeft(BiConsumer<String, String> listener) {
         this.onMemberLeft = listener;
@@ -207,7 +211,52 @@ public class ChatRoomI implements ChatRoom {
                 }
             }
 
+            files.onUserGone(nickname);
+
             System.out.println("[ICE-SERVER] Usuario desconectado: " + nickname);
         }
+    }
+
+    @Override
+    public void registerFileCallback(String nickname, FileCallbackPrx callback, Current current)
+            throws ChatException {
+        if (nickname == null || !onlineUsers.contains(nickname.trim())) {
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+        files.registerCallback(nickname.trim(), callback);
+    }
+
+    @Override
+    public String startUpload(FileInfo info, Current current) throws ChatException {
+        if (info == null || !onlineUsers.contains(info.sender)) {
+            throw new ChatException("Acceso denegado: El usuario debe iniciar sesion primero.");
+        }
+        return files.startUpload(info);
+    }
+
+    @Override
+    public void writeChunk(String uploadId, int chunkIndex, byte[] data, Current current)
+            throws ChatException {
+        files.writeChunk(uploadId, chunkIndex, data);
+    }
+
+    @Override
+    public void closeUpload(String uploadId, Current current) throws ChatException {
+        files.closeUpload(uploadId);
+    }
+
+    @Override
+    public byte[] readChunk(String nickname, String fileId, int chunkIndex, Current current)
+            throws ChatException {
+        return files.readChunk(nickname, fileId, chunkIndex);
+    }
+
+    @Override
+    public void closeDownload(String nickname, String fileId, Current current) {
+        files.closeDownload(nickname, fileId);
+    }
+
+    public void onConnectionLost(String nickname) {
+        files.onUserGone(nickname);
     }
 }
