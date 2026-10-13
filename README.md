@@ -13,7 +13,7 @@ Se mantiene la estructura `common / server / client`. `common` y `server` tienen
 
 | | CHATROOM | 1 A 1 |
 |---|---|---|
-| Slice | `common/src/main/slice/chatroom/Chat.ice` (incluye archivos) | `common/src/main/slice/privatechat/PrivateChat.ice` (nuevo) |
+| Slice | `common/src/main/slice/chatroom/Chat.ice` | `common/src/main/slice/privatechat/PrivateChat.ice` |
 | Modulo Slice / stubs | `ChatApp` | `PrivateChatApp` |
 | Servidor | `server/.../chat/server/chatroom/` (`ChatRoomI`) | `server/.../chat/server/privatechat/` (`PrivateChatI`, `PrivateSession`) |
 | Identidad Ice | `ChatService` | `PrivateChatService` |
