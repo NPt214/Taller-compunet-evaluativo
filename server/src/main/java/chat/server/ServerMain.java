@@ -44,14 +44,17 @@ public class ServerMain {
             adapter.add(callService, Util.stringToIdentity("CallService"));
             
             chatRoom.setOnMemberLeft(callService::onRoomLeft);
-            privateChat.setOnSessionEnded(callService::onUserGone);
+            privateChat.setOnSessionEnded(nick -> {
+                callService.onUserGone(nick);
+                chatRoom.onConnectionLost(nick);
+            });
 
             adapter.activate();
 
             System.out.println("=================================================");
             System.out.println("SERVIDOR ZEROC ICE INICIADO EXITOSAMENTE");
             System.out.println("Puerto TCP: 10000 | Endpoint: default -p 10000");
-            System.out.println("Servicio chatroom : ChatService");
+            System.out.println("Servicio chatroom : ChatService (incluye archivos)");
             System.out.println("Servicio 1 a 1    : PrivateChatService");
             System.out.println("Servicio de voz   : CallService (señalizacion Ice)");
             System.out.println("Relay de audio    : UDP " + relay.getPort());
