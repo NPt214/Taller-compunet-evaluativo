@@ -1,4 +1,3 @@
-# TallerV2
 
 # Integrantes 
 - Anna Sophia A00411470
